@@ -15,6 +15,35 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+    <!-- Firebase (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+    <script>
+      // Configuração do projeto Firebase (scalexos)
+      window.firebaseConfig = {
+        apiKey: "AIzaSyCHWxTf46C5p7Y4X80J2Eu-g7JRF6uoJx8",
+        authDomain: "scalexos-1ef00.firebaseapp.com",
+        projectId: "scalexos-1ef00",
+        storageBucket: "scalexos-1ef00.firebasestorage.app",
+        messagingSenderId: "1019128234000",
+        appId: "1:1019128234000:web:7008e810c2f836e3240a95",
+        measurementId: "G-MM6VL8CQPD"
+      };
+      window.SCALEX_MASTER_EMAIL = "ohebertgustavo@gmail.com";
+      try {
+        firebase.initializeApp(window.firebaseConfig);
+        window.sxAuth = firebase.auth();
+        window.sxDb = firebase.firestore();
+      } catch (e) { console.error('Falha ao inicializar Firebase:', e); }
+
+      // === Google Agenda (Calendar) — preencha o Client ID do Google Cloud ===
+      // Veja o passo a passo em GUIA-GOOGLE-AGENDA.md
+      window.GOOGLE_CLIENT_ID = ""; // ex: "1234567890-xxxx.apps.googleusercontent.com"
+    </script>
+    <!-- Google Identity Services (login/consentimento para o Calendar) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
     <style>
         body { background-color: #0a0a0a; color: #e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; overflow-x: hidden; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -40,6 +69,13 @@
         /* Kanban Styles */
         .kanban-col { min-width: 320px; }
         .drag-over { border-color: #f97316 !important; background-color: rgba(249, 115, 22, 0.05) !important; }
+
+        /* Barra de rolagem visível do funil CRM */
+        .crm-board-scroll { scrollbar-width: thin; scrollbar-color: #f97316 #1a1a1a; }
+        .crm-board-scroll::-webkit-scrollbar { height: 12px; }
+        .crm-board-scroll::-webkit-scrollbar-track { background: #141414; border-radius: 6px; }
+        .crm-board-scroll::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 6px; border: 2px solid #141414; }
+        .crm-board-scroll::-webkit-scrollbar-thumb:hover { background: #f97316; }
     /* ===== Financeiro (DRE & Forecast) ===== */
 .fin-panel { background:#0f0f0f; border:1px solid #222; border-radius:16px; }
 .fin-elev { background:linear-gradient(180deg,#131313 0%,#0d0d0d 100%); border:1px solid #2c2c2c; border-radius:18px; }
@@ -188,11 +224,16 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
         <div class="bg-[#111] border border-[#222] rounded-2xl p-6 space-y-4 shadow-2xl">
           <div>
             <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">E-mail</label>
-            <input type="email" id="login-email" onkeydown="if(event.key==='Enter')window.appActions.doLogin()" placeholder="seuemail@empresa.com" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" />
+            <input type="email" id="login-email" onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()" placeholder="seuemail@empresa.com" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Senha</label>
+            <input type="password" id="login-password" onkeydown="if(event.key==='Enter')window.appActions.doLogin()" placeholder="••••••••" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" />
+            <button onclick="window.appActions.resetPassword()" class="text-[11px] text-gray-500 hover:text-orange-400 mt-2 transition">Esqueci minha senha</button>
           </div>
           <div id="login-error" class="hidden text-xs text-red-400 bg-red-950/30 border border-red-900/40 rounded-lg p-3"></div>
           <button onclick="window.appActions.doLogin()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition"><i data-lucide="log-in" class="w-4 h-4"></i> Entrar</button>
-          <p class="text-[11px] text-gray-600 text-center">Apenas e-mails autorizados pelo administrador tem acesso.</p>
+          <p class="text-[11px] text-gray-600 text-center">Acesso restrito. Fale com o administrador para criar seu login.</p>
         </div>
       </div>
     </div>
@@ -207,14 +248,111 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
         <div class="p-5 space-y-5">
           <div class="bg-[#0d0d0d] border border-[#222] rounded-xl p-4">
             <p class="text-[11px] font-black uppercase text-orange-500 tracking-widest mb-3">Adicionar novo usuario</p>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
               <div><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Nome</label><input id="nu-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-white text-sm outline-none focus:border-orange-500" /></div>
               <div><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">E-mail</label><input id="nu-email" type="email" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-white text-sm outline-none focus:border-orange-500" /></div>
+              <div><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Senha</label><input id="nu-password" type="text" placeholder="mín. 6 caracteres" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-white text-sm outline-none focus:border-orange-500" /></div>
               <div><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Cargo</label><select id="nu-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-white text-sm outline-none"><option value="Administrador">Administrador</option><option value="Closer">Closer</option><option value="SDR">SDR</option><option value="Operacional">Operacional</option></select></div>
               <button onclick="window.appActions.addUser()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition"><i data-lucide="user-plus" class="w-4 h-4"></i> Adicionar</button>
             </div>
           </div>
           <div class="bg-[#111] border border-[#222] rounded-xl overflow-hidden"><div class="overflow-x-auto"><table style="width:100%;border-collapse:collapse;font-size:13px" id="users-table"></table></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL MEU PERFIL -->
+    <div id="modal-profile" class="fixed inset-0 z-[95] bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" onclick="if(event.target===this)window.appActions.closeProfileModal()">
+      <div class="bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div class="p-5 border-b border-[#222] flex items-center justify-between">
+          <h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="user-cog" class="w-5 h-5 text-orange-500"></i> Meu Perfil</h3>
+          <button onclick="window.appActions.closeProfileModal()" class="text-gray-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="p-6 space-y-5">
+          <div class="flex justify-center">
+            <div class="relative w-24 h-24 group" title="Clique para trocar a foto">
+              <img id="pf-photo-preview" class="w-full h-full rounded-2xl object-cover border border-[#333] hidden" />
+              <div id="pf-photo-placeholder" class="w-full h-full rounded-2xl bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-gray-500 group-hover:bg-[#222] transition"><i data-lucide="camera" class="w-7 h-7"></i></div>
+              <input type="file" id="pf-photo-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="window.appActions.profilePhotoPick(this)" />
+            </div>
+          </div>
+          <input type="hidden" id="pf-photo-base64" />
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Nome</label>
+            <input id="pf-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">E-mail</label>
+            <input id="pf-email" disabled class="w-full bg-[#0a0a0a] border border-[#222] rounded-lg p-3 text-gray-500 outline-none cursor-not-allowed" />
+          </div>
+          <button onclick="window.appActions.saveProfile()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2.5 rounded-lg font-bold transition flex items-center justify-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> Salvar nome e foto</button>
+          <div class="pt-4 border-t border-[#222] space-y-3">
+            <p class="text-[11px] font-black uppercase text-gray-500 tracking-widest">Alterar senha</p>
+            <input id="pf-pass1" type="password" placeholder="Nova senha (mín. 6 caracteres)" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" />
+            <input id="pf-pass2" type="password" placeholder="Confirmar nova senha" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" />
+            <button onclick="window.appActions.changeOwnPassword()" class="w-full bg-[#1a1a1a] border border-[#333] text-white py-2.5 rounded-lg font-bold hover:border-orange-500 transition flex items-center justify-center gap-2"><i data-lucide="key-round" class="w-4 h-4"></i> Atualizar senha</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL PRAZO / VENCIMENTO -->
+    <div id="modal-duedate" class="fixed inset-0 z-[95] bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" onclick="if(event.target===this)window.appActions.closeDueDateModal()">
+      <div class="bg-[#141414] border border-[#333] rounded-2xl w-full max-w-sm shadow-2xl">
+        <div class="p-5 border-b border-[#222] flex items-center justify-between">
+          <h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="calendar-clock" class="w-5 h-5 text-orange-500"></i> Prazo de Atendimento</h3>
+          <button onclick="window.appActions.closeDueDateModal()" class="text-gray-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="dd-lead-id" />
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Data limite de atendimento</label>
+            <input type="date" id="dd-date" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" />
+          </div>
+          <p class="text-[11px] text-gray-500">Se essa data passar e o lead não for fechado, o card fica vermelho e marcado como <b class="text-red-400">Atrasado</b>.</p>
+          <div class="flex gap-2">
+            <button onclick="window.appActions.clearDueDate()" class="px-4 py-2.5 rounded-lg text-sm font-bold text-gray-400 bg-[#1a1a1a] border border-[#333] hover:text-white transition">Limpar</button>
+            <button onclick="window.appActions.saveDueDate()" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2.5 rounded-lg font-bold transition">Salvar prazo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL AGENDAR REUNIÃO (Google Agenda) -->
+    <div id="modal-meeting" class="fixed inset-0 z-[95] bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" onclick="if(event.target===this)window.appActions.closeMeetingModal()">
+      <div class="bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div class="p-5 border-b border-[#222] flex items-center justify-between">
+          <h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="calendar-plus" class="w-5 h-5 text-orange-500"></i> Agendar Reunião de Diagnóstico</h3>
+          <button onclick="window.appActions.closeMeetingModal()" class="text-gray-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="mt-lead-id" />
+          <div class="text-xs text-gray-400">Empresa: <span id="mt-company" class="text-white font-bold">—</span></div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Closer responsável <span class="text-orange-500">*</span></label>
+            <select id="mt-closer" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">E-mail do cliente <span class="text-orange-500">*</span></label>
+            <input id="mt-client-email" type="email" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" placeholder="cliente@empresa.com" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Data e hora <span class="text-orange-500">*</span></label>
+              <input type="datetime-local" id="mt-datetime" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Duração</label>
+              <select id="mt-duration" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500"><option value="30">30 min</option><option value="45" selected>45 min</option><option value="60">1 hora</option><option value="90">1h30</option></select>
+            </div>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer"><input type="checkbox" id="mt-meet" checked class="accent-orange-500" /> Criar link do Google Meet</label>
+          <div id="mt-note" class="text-[11px] text-gray-500"></div>
+          <div class="flex flex-col gap-2 pt-2">
+            <button onclick="window.appActions.confirmMeeting()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2.5 rounded-lg font-bold transition flex items-center justify-center gap-2"><i data-lucide="calendar-check" class="w-4 h-4"></i> Agendar no Google e mover</button>
+            <button onclick="window.appActions.meetingMoveOnly()" class="w-full bg-[#1a1a1a] border border-[#333] text-gray-300 py-2.5 rounded-lg font-bold hover:border-orange-500 transition">Mover sem agendar</button>
+            <button onclick="window.appActions.closeMeetingModal()" class="w-full text-gray-500 hover:text-white py-2 rounded-lg font-bold transition">Cancelar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -237,14 +375,16 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                     <button onclick="window.appActions.toggleMobileMenu()" class="md:hidden text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
                 </div>
                 
-                <div class="p-5 border-b border-[#222] bg-[#171717] flex items-center gap-3 flex-shrink-0">
-                    <div class="w-11 h-11 rounded-full bg-orange-900/30 border-2 border-orange-500/50 flex items-center justify-center font-bold text-orange-400">
-                        <i data-lucide="user" class="w-5 h-5"></i>
+                <div onclick="window.appActions.openProfileModal()" class="p-5 border-b border-[#222] bg-[#171717] flex items-center gap-3 flex-shrink-0 cursor-pointer hover:bg-[#1c1c1c] transition group" title="Editar meu perfil">
+                    <div class="w-11 h-11 rounded-full bg-orange-900/30 border-2 border-orange-500/50 flex items-center justify-center font-bold text-orange-400 overflow-hidden shrink-0">
+                        <img id="sidebar-user-photo" class="w-full h-full object-cover hidden" />
+                        <i id="sidebar-user-icon" data-lucide="user" class="w-5 h-5"></i>
                     </div>
                     <div class="overflow-hidden flex-1">
                         <p class="text-sm font-bold text-white truncate" id="sidebar-user-name">Liderança SCALEX</p>
                         <p id="sidebar-user-role" class="text-[10px] text-orange-500 font-bold uppercase tracking-wider mt-0.5">Administrador</p>
                     </div>
+                    <i data-lucide="settings" class="w-4 h-4 text-gray-600 group-hover:text-orange-400 transition shrink-0"></i>
                 </div>
 
                 <!-- SIMULADOR DE VISÃO -->
@@ -302,7 +442,7 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                 <input type="hidden" id="lead-id" />
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Nome da Empresa / Negócio <span class="text-orange-500">*</span></label>
-                    <select id="lead-company" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-orange-500 transition-all outline-none"><option value="">Selecione a empresa...</option></select>
+                    <select id="lead-company" onchange="window.appActions.leadCompanyChange()" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-orange-500 transition-all outline-none"><option value="">Selecione a empresa...</option></select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Ponto de Contato</label>
@@ -311,6 +451,10 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Telefone / WhatsApp</label>
                     <input type="text" id="lead-phone" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-orange-500 transition-all outline-none" placeholder="(00) 00000-0000" />
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">E-mail do Contato</label>
+                    <input type="email" id="lead-email" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-orange-500 transition-all outline-none" placeholder="cliente@empresa.com" />
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Valor Estimado Inicial</label>
@@ -329,6 +473,21 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                 <div class="md:col-span-2 pt-2 border-t border-[#222]">
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Contexto / Observações</label>
                     <textarea id="lead-notes" rows="3" class="w-full bg-[#0a0a0a] border border-[#333] rounded-xl p-3 text-white focus:border-orange-500 transition-all outline-none resize-none"></textarea>
+                </div>
+                <div id="lead-owner-wrap" class="md:col-span-2 pt-2 border-t border-[#222] hidden">
+                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5"></i> Responsável pelo Lead</label>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span id="lead-owner-name" class="text-sm font-bold text-white bg-[#0a0a0a] border border-[#222] rounded-lg px-3 py-2">—</span>
+                        <div id="lead-transfer-box" class="hidden flex items-center gap-2 flex-wrap">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-gray-600"></i>
+                            <select id="lead-transfer-select" class="bg-[#0a0a0a] border border-[#333] rounded-lg p-2 text-white text-sm outline-none focus:border-orange-500"></select>
+                            <button onclick="window.appActions.transferLead()" class="text-xs font-bold px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition flex items-center gap-1.5"><i data-lucide="repeat" class="w-3.5 h-3.5"></i> Transferir</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="lead-history-wrap" class="md:col-span-2 pt-2 border-t border-[#222] hidden">
+                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5"></i> Atribuição & Histórico</label>
+                    <div id="lead-history" class="space-y-2 max-h-48 overflow-y-auto"></div>
                 </div>
             </div>
             <div class="p-6 border-t border-[#2a2a2a] bg-[#111] flex justify-end gap-3 sticky bottom-0 z-20 rounded-b-2xl">
@@ -668,6 +827,81 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
             </div>
         </div>
 
+        <!-- MODAL 8: PROPOSTA -->
+        <div id="modal-proposal" class="hidden bg-[#141414] border-2 border-orange-500/30 rounded-2xl w-full max-w-2xl shadow-2xl flex-col animate-scale-in max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-20">
+                <div><h2 class="text-xl font-bold text-white tracking-tight flex items-center gap-2"><i data-lucide="file-text" class="text-orange-500 w-5 h-5"></i> Montar Proposta</h2><p class="text-xs text-gray-400 mt-1">Empresa: <span id="prop-company" class="text-orange-400 font-bold">—</span></p></div>
+                <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-orange-500 bg-[#222] hover:bg-[#333] rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-5">
+                <div class="bg-[#0a0a0a] border border-[#222] rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3"><label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Adicionar produto</label><button onclick="window.appActions.openProductCatalog(true)" class="text-[11px] font-bold text-orange-400 hover:text-orange-300 flex items-center gap-1"><i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Gerenciar catálogo</button></div>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
+                        <div class="md:col-span-5"><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Produto</label><select id="prop-product" onchange="window.appActions.propProductChange()" class="w-full bg-[#111] border border-[#333] rounded-lg p-2.5 text-white outline-none focus:border-orange-500"></select></div>
+                        <div class="md:col-span-3"><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">MRR</label><div class="relative"><span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold pointer-events-none">R$</span><input id="prop-mrr" oninput="window.appActions.formatCurrencyInput(this)" class="w-full bg-[#111] border border-[#333] rounded-lg p-2.5 pl-7 text-white outline-none focus:border-orange-500" placeholder="0,00" /></div></div>
+                        <div class="md:col-span-3"><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Setup</label><div class="relative"><span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold pointer-events-none">R$</span><input id="prop-setup" oninput="window.appActions.formatCurrencyInput(this)" class="w-full bg-[#111] border border-[#333] rounded-lg p-2.5 pl-7 text-white outline-none focus:border-orange-500" placeholder="0,00" /></div></div>
+                        <div class="md:col-span-1"><button onclick="window.appActions.propAddItem()" class="w-full h-[42px] bg-orange-600 hover:bg-orange-700 rounded-lg text-white flex items-center justify-center transition" title="Adicionar à proposta"><i data-lucide="plus" class="w-4 h-4"></i></button></div>
+                    </div>
+                </div>
+                <div id="prop-items"></div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-[#0a0a0a] border border-[#222] rounded-xl p-3 text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">MRR</div><div id="prop-tot-mrr" class="text-sm font-black text-emerald-400">R$ 0,00</div></div>
+                    <div class="bg-[#0a0a0a] border border-[#222] rounded-xl p-3 text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Setup</div><div id="prop-tot-setup" class="text-sm font-black text-gray-200">R$ 0,00</div></div>
+                    <div class="bg-[#1a1a1a] border border-orange-900/50 rounded-xl p-3 text-center"><div class="text-[10px] text-orange-500 uppercase font-bold">Total</div><div id="prop-tot-geral" class="text-sm font-black text-orange-400">R$ 0,00</div></div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-[#2a2a2a] bg-[#111] flex justify-end gap-3 sticky bottom-0 z-20 rounded-b-2xl">
+                <button onclick="window.appActions.closeModal()" class="px-6 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white hover:bg-[#222] transition-colors">Cancelar</button>
+                <button onclick="window.appActions.saveProposal()" class="bg-orange-600 hover:bg-orange-700 text-white px-8 py-2.5 rounded-lg font-bold transition-all shadow-lg shadow-orange-900/40 hover:-translate-y-0.5 flex items-center gap-2"><i data-lucide="check" class="w-4 h-4"></i> Salvar Proposta</button>
+            </div>
+        </div>
+
+        <!-- MODAL 9: EMPRESA / CONTATO -->
+        <div id="modal-company" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-lg shadow-2xl flex-col animate-scale-in max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-20">
+                <h2 id="co-modal-title" class="text-xl font-bold text-white tracking-tight flex items-center gap-2"><i data-lucide="building-2" class="text-orange-500 w-5 h-5"></i> Nova empresa</h2>
+                <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-orange-500 bg-[#222] hover:bg-[#333] rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="co-id" />
+                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Empresa <span class="text-orange-500">*</span></label><input id="co-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" /></div>
+                <div><label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Contato</label><input id="co-contact" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" /></div>
+                <div><label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Telefone</label><input id="co-phone" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" /></div>
+                <div><label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">E-mail</label><input id="co-email" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" /></div>
+                <div><label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Segmento</label><input id="co-segment" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" /></div>
+                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Observações</label><textarea id="co-notes" rows="2" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500 resize-none"></textarea></div>
+            </div>
+            <div class="p-6 border-t border-[#2a2a2a] bg-[#111] flex justify-end gap-3 rounded-b-2xl">
+                <button onclick="window.appActions.closeModal()" class="px-6 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white hover:bg-[#222] transition-colors">Cancelar</button>
+                <button onclick="window.appActions.saveCompany()" class="bg-orange-600 hover:bg-orange-700 text-white px-8 py-2.5 rounded-lg font-bold transition-all shadow-lg shadow-orange-900/40 hover:-translate-y-0.5">Salvar Empresa</button>
+            </div>
+        </div>
+
+        <!-- MODAL 10: CATÁLOGO DE PRODUTOS -->
+        <div id="modal-products" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-lg shadow-2xl flex-col animate-scale-in max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-20">
+                <h2 class="text-xl font-bold text-white tracking-tight flex items-center gap-2"><i data-lucide="package" class="text-orange-500 w-5 h-5"></i> Catálogo de Produtos</h2>
+                <button onclick="window.appActions.closeProductCatalog()" class="p-2 text-gray-400 hover:text-orange-500 bg-[#222] hover:bg-[#333] rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-5">
+                <div class="bg-[#0a0a0a] border border-[#222] rounded-xl p-4 space-y-3">
+                    <div id="prod-form-title" class="text-xs font-bold text-gray-400 uppercase tracking-wider">Novo produto</div>
+                    <input id="prod-name" placeholder="Nome do produto" class="w-full bg-[#111] border border-[#333] rounded-lg p-2.5 text-white outline-none focus:border-orange-500" />
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="relative"><span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold pointer-events-none">R$</span><input id="prod-mrr" oninput="window.appActions.formatCurrencyInput(this)" placeholder="MRR padrão" class="w-full bg-[#111] border border-[#333] rounded-lg p-2.5 pl-7 text-white outline-none focus:border-orange-500" /></div>
+                        <div class="relative"><span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold pointer-events-none">R$</span><input id="prod-setup" oninput="window.appActions.formatCurrencyInput(this)" placeholder="Setup padrão" class="w-full bg-[#111] border border-[#333] rounded-lg p-2.5 pl-7 text-white outline-none focus:border-orange-500" /></div>
+                    </div>
+                    <textarea id="prod-desc" rows="3" placeholder="Descrição do produto (o que é, para quem, principais entregáveis...)" class="w-full bg-[#111] border border-[#333] rounded-lg p-2.5 text-white text-sm outline-none focus:border-orange-500 resize-none"></textarea>
+                    <div class="relative"><i data-lucide="link" class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i><input id="prod-link" type="url" placeholder="Link da página de apresentação (https://...)" class="w-full bg-[#111] border border-[#333] rounded-lg p-2.5 pl-8 text-white outline-none focus:border-orange-500" /></div>
+                    <div class="flex gap-2"><button onclick="window.appActions.newProduct()" class="px-3 py-2 rounded-lg text-xs font-bold text-gray-400 bg-[#1a1a1a] border border-[#333] hover:text-white transition">Limpar</button><button onclick="window.appActions.saveProduct()" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg font-bold transition">Salvar produto</button></div>
+                </div>
+                <div id="prod-list" class="space-y-2"></div>
+            </div>
+            <div class="p-6 border-t border-[#2a2a2a] bg-[#111] flex justify-end gap-3 rounded-b-2xl">
+                <button onclick="window.appActions.closeProductCatalog()" class="px-6 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white hover:bg-[#222] transition-colors">Fechar</button>
+            </div>
+        </div>
+
     </div>
 
     <!-- ========================================== -->
@@ -683,7 +917,9 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                 { id: 'crm', icon: 'crosshair', label: 'CRM de Vendas', roles: ['Administrador', 'Closer', 'SDR'] },
                 { id: 'dre', icon: 'trending-up', label: 'DRE & Forecast', roles: ['Administrador'] },
                 { id: 'contracts', icon: 'file-signature', label: 'Gestão de Contratos', roles: ['Administrador'] },
-                { id: 'leadsbase', icon: 'database', label: 'Base de Leads', roles: ['Administrador', 'SDR', 'Closer'] }
+                { id: 'leadsbase', icon: 'database', label: 'Base de Leads', roles: ['Administrador', 'SDR', 'Closer'] },
+                { id: 'companiesrep', icon: 'building-2', label: 'Empresas & Contatos', roles: ['Administrador', 'Closer', 'SDR'] },
+                { id: 'closedprojects', icon: 'archive', label: 'Projetos Encerrados', roles: ['Administrador'] }
             ];
 
             const role = window.state.currentUserRole;
@@ -999,27 +1235,22 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
             ev.currentTarget.classList.remove('drag-over');
             const leadId = ev.dataTransfer.getData("leadId");
             const leadIndex = window.state.leads.findIndex(l => l.id === leadId);
-            
             if(leadIndex > -1) {
-                if(phase === 'Fechado (I.O.S)' && window.state.leads[leadIndex].phase !== 'Fechado (I.O.S)') {
-                    window.appActions.openCloseDealModal(leadId);
-                } else {
-                    window.state.leads[leadIndex].phase = phase;
-                    renderContent(); 
-                }
+                window.appActions.attemptMoveLead(leadId, phase);
             }
         };
 
         window.appActions.openLeadModal = function(id = null) {
-            /* [INJETADO] Lista suspensa: apenas empresas cadastradas em Gestao de Contratos */
+            /* [INJETADO] Lista suspensa: empresas do repositório de Empresas & Contatos */
             (function(){
               var sel = document.getElementById('lead-company');
               if(sel && sel.tagName === 'SELECT'){
-                var clientes = (window.state && window.state.clients) ? window.state.clients : [];
-                var nomes = clientes.map(function(c){ return c.name; });
-                if(id){ var ld = window.state.leads.find(function(l){ return l.id===id; }); if(ld){ var cn = ld.company || ld.name; if(cn && nomes.indexOf(cn)<0) nomes.push(cn); } }
+                var empresas = (window.state && window.state.companies) ? window.state.companies.map(function(c){ return c.name; }) : [];
+                if(id){ var ld = window.state.leads.find(function(l){ return l.id===id; }); if(ld){ var cn = ld.company || ld.name; if(cn && empresas.indexOf(cn)<0) empresas.push(cn); } }
+                empresas.sort(function(a,b){ return (a||'').localeCompare(b||''); });
                 var opts = '<option value="">Selecione a empresa...</option>';
-                nomes.forEach(function(n){ opts += '<option value="'+window.escapeHTML(n)+'">'+window.escapeHTML(n)+'</option>'; });
+                empresas.forEach(function(n){ opts += '<option value="'+window.escapeHTML(n)+'">'+window.escapeHTML(n)+'</option>'; });
+                opts += '<option value="__new">➕ Cadastrar nova empresa...</option>';
                 sel.innerHTML = opts;
               }
             })();
@@ -1146,7 +1377,7 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
 
         function getCrmHTML() {
             const cols = ["Tratativa Inicial", "Qualificação (SDR)", "Reunião de Diagnóstico", "Proposta Enviada", "Negociação", "Fechado (I.O.S)"];
-            let boardHTML = `<div class="flex gap-5 overflow-x-auto pb-6 pt-2 items-start h-full scrollbar-hide">`;
+            let boardHTML = `<div id="crm-board-scroll" class="flex gap-5 overflow-x-auto pb-4 pt-2 items-start h-full crm-board-scroll">`;
             cols.forEach((col, index) => {
                 const colLeads = window.state.leads.filter(l => l.phase === col);
                 const colSum = colLeads.reduce((a, b) => a + Number(b.value), 0);
@@ -1171,12 +1402,30 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                     const waText = encodeURIComponent(`Olá ${firstName}, tudo bem? Recebi seu atendimento e estou seguindo com o seu retorno por aqui.`);
                     const waLink = phoneClean ? `https://wa.me/55${phoneClean}?text=${waText}` : '#';
 
+                    const canDelLead = window.appActions.isAdmin && window.appActions.isAdmin();
+                    const delLeadBtn = canDelLead ? `<button onclick="event.stopPropagation();window.appActions.deleteLead('${lead.id}')" class="text-gray-600 hover:text-red-500 p-1 -mt-1 -mr-1 transition-colors" title="Excluir lead"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : '';
+                    const hasProposal = lead.proposal && Number(lead.proposal.total || 0) > 0;
+                    const propBtn = `<button onclick="event.stopPropagation();window.appActions.openProposalModal('${lead.id}')" class="text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded-md ${hasProposal ? 'text-orange-400 bg-orange-500/10 border border-orange-900/40' : 'text-gray-500 bg-[#0a0a0a] border border-[#333] hover:text-orange-400'} transition-colors" title="${hasProposal ? 'Ver/editar proposta' : 'Criar proposta'}"><i data-lucide="file-text" class="w-3 h-3"></i> ${hasProposal ? 'Proposta' : 'Propor'}</button>`;
+                    const dueRaw = lead.dueDate || '';
+                    let overdue = false, dueLabel = 'Prazo';
+                    if(dueRaw){ const _p=dueRaw.split('-'); const _d=new Date(Number(_p[0]),Number(_p[1])-1,Number(_p[2])); const _t=new Date(); _t.setHours(0,0,0,0); overdue = (_d < _t) && !isWinCol; dueLabel = _d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }
+                    const dueBtn = `<button onclick="event.stopPropagation();window.appActions.openDueDateModal('${lead.id}')" class="text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded-md ${overdue ? 'text-red-300 bg-red-500/15 border border-red-700/50' : 'text-gray-400 bg-[#0a0a0a] border border-[#333] hover:text-orange-400'} transition-colors" title="Data de atendimento/vencimento"><i data-lucide="calendar-clock" class="w-3 h-3"></i> ${dueLabel}</button>`;
+                    const overdueBadge = overdue ? `<span class="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-red-600 text-white flex items-center gap-1"><i data-lucide="alert-triangle" class="w-2.5 h-2.5"></i> Atrasado</span>` : '';
+                    const cardCls = overdue ? 'bg-red-950/20 border-red-600/70 hover:border-red-500' : (isWinCol ? 'bg-[#1a1a1a] border-emerald-900/50 hover:border-emerald-500/80' : 'bg-[#1a1a1a] border-[#333] hover:border-orange-500/50');
+                    let stageDots = '';
+                    cols.forEach((_, di) => { stageDots += `<span class="h-1 flex-1 rounded-full ${di <= index ? (isWinCol ? 'bg-emerald-500' : 'bg-orange-500') : 'bg-[#2a2a2a]'}"></span>`; });
+                    const stageBar = `<div class="flex items-center gap-2 mt-3" onclick="event.stopPropagation()">
+                        <button ${index === 0 ? 'disabled' : ''} onclick="event.stopPropagation();window.appActions.moveLeadStage('${lead.id}', -1)" class="w-6 h-6 flex items-center justify-center rounded-md bg-[#0a0a0a] border border-[#333] text-gray-500 hover:text-white hover:border-[#555] disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Voltar etapa"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
+                        <div class="flex-1 flex gap-1">${stageDots}</div>
+                        <button ${isWinCol ? 'disabled' : ''} onclick="event.stopPropagation();window.appActions.moveLeadStage('${lead.id}', 1)" class="w-6 h-6 flex items-center justify-center rounded-md bg-[#0a0a0a] border border-[#333] text-gray-500 hover:text-white hover:border-[#555] disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Avançar etapa"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button>
+                    </div>`;
                     boardHTML += `
-                        <div draggable="true" ondragstart="window.appActions.drag(event, '${lead.id}')" ondragend="window.appActions.dragEnd(event)" onclick="window.appActions.openLeadModal('${lead.id}')" class="bg-[#1a1a1a] border ${isWinCol ? 'border-emerald-900/50 hover:border-emerald-500/80' : 'border-[#333] hover:border-orange-500/50'} p-4 rounded-xl cursor-pointer transition-all hover:shadow-lg relative">
-                            <div class="flex justify-between items-start mb-2"><span class="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1 ${tagClass}"><i data-lucide="${tagIcon}" class="w-2.5 h-2.5"></i> ${window.escapeHTML(lead.tag)}</span></div>
+                        <div draggable="true" ondragstart="window.appActions.drag(event, '${lead.id}')" ondragend="window.appActions.dragEnd(event)" onclick="window.appActions.openLeadModal('${lead.id}')" class="border ${cardCls} p-4 rounded-xl cursor-pointer transition-all hover:shadow-lg relative">
+                            <div class="flex justify-between items-start mb-2 gap-1"><div class="flex items-center gap-1 flex-wrap"><span class="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1 ${tagClass}"><i data-lucide="${tagIcon}" class="w-2.5 h-2.5"></i> ${window.escapeHTML(lead.tag)}</span>${overdueBadge}</div>${delLeadBtn}</div>
                             <h4 class="text-sm font-bold text-white mb-1 leading-tight">${window.escapeHTML(lead.company)}</h4>
                             ${lead.name !== lead.company ? `<p class="text-[10px] text-gray-500 mb-2 font-medium flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${window.escapeHTML(lead.name)}</p>` : ''}
-                            <div class="flex justify-between items-center mt-3 pt-3 border-t border-[#2a2a2a]"><span class="text-xs font-black ${isWinCol ? 'text-white' : 'text-emerald-400'}">${window.formatCurrency(lead.value)}</span><a href="${waLink}" target="_blank" onclick="event.stopPropagation()" class="w-7 h-7 bg-[#0a0a0a] hover:bg-[#25D366]/20 transition-colors border border-[#333] hover:border-[#25D366]/50 rounded-full flex items-center justify-center text-gray-500 hover:text-[#25D366]"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i></a></div>
+                            <div class="flex justify-between items-center mt-3 pt-3 border-t border-[#2a2a2a] gap-2"><span class="text-xs font-black ${isWinCol ? 'text-white' : 'text-emerald-400'} shrink-0">${window.formatCurrency(lead.value)}</span><div class="flex items-center gap-1.5 flex-wrap justify-end">${dueBtn}${propBtn}<a href="${waLink}" target="_blank" onclick="event.stopPropagation()" class="w-7 h-7 bg-[#0a0a0a] hover:bg-[#25D366]/20 transition-colors border border-[#333] hover:border-[#25D366]/50 rounded-full flex items-center justify-center text-gray-500 hover:text-[#25D366] shrink-0"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i></a></div></div>
+                            ${stageBar}
                         </div>`;
                 });
                 boardHTML += `</div>`;
@@ -1184,7 +1433,7 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                 boardHTML += `</div>`;
             });
             boardHTML += `</div>`;
-            return `<div class="animate-fade-in h-full flex flex-col overflow-hidden"><div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 flex-shrink-0"><div><h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">Pipeline Operacional</h2><p class="text-sm text-gray-400 mt-1">Os leads são rastreados pelas fontes do Dashboard.</p></div><div class="flex gap-3 w-full md:w-auto"><button onclick="window.appActions.openLeadModal()" class="w-full md:w-auto bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-orange-700 transition-transform hover:-translate-y-0.5 shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i> Novo Negócio</button></div></div><div class="flex-1 overflow-hidden">${boardHTML}</div></div>`;
+            return `<div class="animate-fade-in h-full flex flex-col overflow-hidden"><div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 flex-shrink-0"><div><h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">Pipeline Operacional</h2><p class="text-sm text-gray-400 mt-1">Os leads são rastreados pelas fontes do Dashboard.</p></div><div class="flex gap-3 w-full md:w-auto items-center"><div class="flex gap-1.5 mr-1"><button onclick="window.appActions.scrollCrm(-1)" class="w-11 h-11 flex items-center justify-center bg-[#1a1a1a] border border-[#333] text-gray-300 rounded-xl hover:bg-[#222] hover:text-orange-500 hover:border-orange-900/50 transition-all shadow-lg" title="Rolar para a esquerda"><i data-lucide="chevron-left" class="w-5 h-5"></i></button><button onclick="window.appActions.scrollCrm(1)" class="w-11 h-11 flex items-center justify-center bg-[#1a1a1a] border border-[#333] text-gray-300 rounded-xl hover:bg-[#222] hover:text-orange-500 hover:border-orange-900/50 transition-all shadow-lg" title="Rolar para a direita"><i data-lucide="chevron-right" class="w-5 h-5"></i></button></div><button onclick="window.appActions.openProductCatalog()" class="w-full md:w-auto bg-[#1a1a1a] border border-[#333] text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#222] transition-transform hover:-translate-y-0.5 shadow-lg"><i data-lucide="package" class="w-4 h-4"></i> Catálogo</button><button onclick="window.appActions.openLeadModal()" class="w-full md:w-auto bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-orange-700 transition-transform hover:-translate-y-0.5 shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i> Novo Negócio</button></div></div><div class="flex-1 overflow-hidden">${boardHTML}</div></div>`;
         }
 
         function getTeamHTML() {
@@ -1833,7 +2082,8 @@ function initLeadsBase(){ lbLoad(); window.appActions.renderLeadsBase(); if(wind
 
         /* === TELAS FALTANTES (Projetos + Contratos) === */
 function getClientsHTML(){
-  var clients = (window.state && window.state.clients) ? window.state.clients : [];
+  var clients = (window.state && window.state.clients) ? window.state.clients.filter(function(c){ return c.status!=='Churn' && c.status!=='Encerrado'; }) : [];
+  var canDelProj = window.appActions.isAdmin && window.appActions.isAdmin();
   var fases = [
     { key:'Intelligence', label:'Intelligence', sub:'Blueprint', color:'#3b82f6', icon:'search' },
     { key:'Operation', label:'Operation', sub:'Setup', color:'#a855f7', icon:'settings' },
@@ -1868,6 +2118,8 @@ function getClientsHTML(){
       html += '<div class="flex items-center justify-between text-xs mb-2"><span class="text-gray-500">MRR</span><span class="font-black text-emerald-400">'+window.formatCurrency(Number(c.recurringValue||0))+'</span></div>';
       if(Number(c.oneTimeValue||0)>0){ html += '<div class="flex items-center justify-between text-xs mb-2"><span class="text-gray-500">Setup</span><span class="font-bold text-gray-300">'+window.formatCurrency(Number(c.oneTimeValue))+'</span></div>'; }
       html += '<div class="flex items-center justify-between text-[10px] text-gray-500 mt-3 pt-2 border-t border-[#222]"><span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> '+(c.contractMonths||'-')+' meses</span><span class="flex items-center gap-1"><i data-lucide="flag" class="w-3 h-3"></i> '+(c.deliveryDate||'-')+'</span></div>';
+      var delProjBtn = canDelProj ? '<button onclick="event.stopPropagation();window.appActions.deleteClient(\''+c.id+'\')" class="px-2.5 py-1.5 rounded-md bg-[#1a1a1a] border border-[#333] text-gray-500 hover:text-red-500 hover:border-red-900/50 transition" title="Excluir projeto"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>' : '';
+      html += '<div class="flex gap-2 mt-3 pt-3 border-t border-[#222]" onclick="event.stopPropagation()"><button onclick="event.stopPropagation();window.appActions.encerrarProjeto(\''+c.id+'\')" class="flex-1 py-1.5 rounded-md bg-[#1a1a1a] border border-[#333] text-[11px] font-bold text-gray-400 hover:text-orange-400 hover:border-orange-900/50 transition flex items-center justify-center gap-1" title="Mover para encerrados (churn)"><i data-lucide="archive" class="w-3.5 h-3.5"></i> Encerrar</button>'+delProjBtn+'</div>';
       html += '</div>';
     });
     html += '</div></div>';
@@ -1907,7 +2159,8 @@ function getContractsHTML(){
     html += '<td style="padding:12px 14px;text-align:right;color:#ccc;font-weight:600">'+window.formatCurrency(Number(c.oneTimeValue||0))+'</td>';
     html += '<td style="padding:12px 14px;text-align:center;color:#aaa">'+(c.contractMonths||'-')+' meses</td>';
     html += '<td style="padding:12px 14px;text-align:center"><span style="font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 8px;border-radius:6px;'+stColor+'">'+(c.status||'-')+'</span></td>';
-    html += '<td style="padding:12px 14px;text-align:center"><button onclick="window.appActions.openClientModal(\''+c.id+'\')" style="color:#666;padding:4px"><i data-lucide="edit-2" class="w-4 h-4"></i></button></td>';
+    var delContractBtn = (window.appActions.isAdmin && window.appActions.isAdmin()) ? '<button onclick="window.appActions.deleteContractRow(\''+c.id+'\')" style="color:#666;padding:4px;margin-left:4px" title="Excluir contrato"><i data-lucide="trash-2" class="w-4 h-4"></i></button>' : '';
+    html += '<td style="padding:12px 14px;text-align:center"><button onclick="window.appActions.openClientModal(\''+c.id+'\')" style="color:#666;padding:4px" title="Editar"><i data-lucide="edit-2" class="w-4 h-4"></i></button>'+delContractBtn+'</td>';
     html += '</tr>';
   });
   html += '</tbody></table></div></div></div>';
@@ -1927,6 +2180,8 @@ function getContractsHTML(){
             else if (window.state.activeTab === 'contracts') { content.innerHTML = getContractsHTML(); }
             else if (window.state.activeTab === 'clients') { content.innerHTML = getClientsHTML(); }
             else if (window.state.activeTab === 'leadsbase') { content.innerHTML = getLeadsBaseHTML(); setTimeout(initLeadsBase, 50); }
+            else if (window.state.activeTab === 'companiesrep') { content.innerHTML = getCompaniesHTML(); }
+            else if (window.state.activeTab === 'closedprojects') { content.innerHTML = getClosedProjectsHTML(); }
             if(window.lucide) { window.lucide.createIcons(); }
         }
 
@@ -2212,6 +2467,356 @@ function finInit(){
   if(window.lucide) lucide.createIcons();
 }
 
+/* ============================================================ */
+/* ===== EXTENSÕES SCALEX (RBAC, Empresas, Produtos,        ===== */
+/* ===== Propostas, Funil, Projetos Encerrados)            ===== */
+/* ============================================================ */
+var CO_KEY = 'scalex_companies_v1', PROD_KEY = 'scalex_products_v1';
+var SX_CRM_STAGES = ["Tratativa Inicial","Qualificação (SDR)","Reunião de Diagnóstico","Proposta Enviada","Negociação","Fechado (I.O.S)"];
+
+window.appActions = window.appActions || {};
+window.appActions.isAdmin = function(){ return (window.state && window.state.currentUserRole) === 'Administrador'; };
+function sxRequireAdmin(acao){
+  if(!window.appActions.isAdmin()){ window.showToast('Apenas o Administrador pode '+(acao||'executar esta ação')+'.', 'error'); return false; }
+  return true;
+}
+function sxHidePanels(){ document.querySelectorAll('#modal-backdrop > div').forEach(function(m){ m.classList.add('hidden'); }); }
+function sxShow(modalId){ sxHidePanels(); document.getElementById(modalId).classList.remove('hidden'); document.getElementById('modal-backdrop').classList.remove('hidden'); if(window.lucide) lucide.createIcons(); }
+
+/* ---------- Repositório de Empresas / Contatos ---------- */
+function coSave(){ try{ localStorage.setItem(CO_KEY, JSON.stringify(window.state.companies||[])); }catch(e){} }
+function coLoad(){
+  var stored=null; try{ stored = JSON.parse(localStorage.getItem(CO_KEY)); }catch(e){ stored=null; }
+  if(stored && stored.length){ window.state.companies = stored; return window.state.companies; }
+  var seed=[], seen={};
+  (window.state.clients||[]).forEach(function(c){ var n=(c.name||'').trim(); if(n && !seen[n.toLowerCase()]){ seen[n.toLowerCase()]=1; seed.push({ id:'CO'+Date.now()+Math.floor(Math.random()*99999), name:n, contact:'', phone:'', email:'', segment:'', notes:'' }); } });
+  (window.state.leads||[]).forEach(function(l){ var n=(l.company||'').trim(); if(n && !seen[n.toLowerCase()]){ seen[n.toLowerCase()]=1; seed.push({ id:'CO'+Date.now()+Math.floor(Math.random()*99999), name:n, contact:l.name||'', phone:l.phone||'', email:'', segment:'', notes:'' }); } });
+  window.state.companies = seed; coSave(); return seed;
+}
+function coFindByName(n){ n=(n||'').trim().toLowerCase(); return (window.state.companies||[]).find(function(c){ return (c.name||'').trim().toLowerCase()===n; }); }
+
+window.appActions.leadCompanyChange = function(){
+  var sel=document.getElementById('lead-company'); if(!sel) return;
+  if(sel.value==='__new'){ sel.value=''; window.appActions.openCompanyModal(null, true); return; }
+  var c=coFindByName(sel.value);
+  if(c){ var n=document.getElementById('lead-name'); if(n && !n.value && c.contact) n.value=c.contact; var p=document.getElementById('lead-phone'); if(p && !p.value && c.phone) p.value=c.phone; }
+};
+window.appActions.openCompanyModal = function(id, fromLead){
+  window.__sxCoEdit = id||null; window.__sxCoReturnToLead = !!fromLead;
+  var c = id ? (window.state.companies||[]).find(function(x){ return x.id===id; }) : null;
+  document.getElementById('co-id').value = id||'';
+  document.getElementById('co-name').value = c?c.name:'';
+  document.getElementById('co-contact').value = c?(c.contact||''):'';
+  document.getElementById('co-phone').value = c?(c.phone||''):'';
+  document.getElementById('co-email').value = c?(c.email||''):'';
+  document.getElementById('co-segment').value = c?(c.segment||''):'';
+  document.getElementById('co-notes').value = c?(c.notes||''):'';
+  document.getElementById('co-modal-title').innerText = c?'Editar empresa':'Nova empresa';
+  sxShow('modal-company');
+};
+window.appActions.saveCompany = function(){
+  var name=(document.getElementById('co-name').value||'').trim();
+  if(!name){ window.showToast('Informe o nome da empresa.', 'error'); return; }
+  var data={ contact:(document.getElementById('co-contact').value||'').trim(), phone:(document.getElementById('co-phone').value||'').trim(), email:(document.getElementById('co-email').value||'').trim(), segment:(document.getElementById('co-segment').value||'').trim(), notes:(document.getElementById('co-notes').value||'').trim() };
+  if(window.__sxCoEdit){
+    var ex=(window.state.companies||[]).find(function(x){ return x.id===window.__sxCoEdit; });
+    if(ex){ ex.name=name; ex.contact=data.contact; ex.phone=data.phone; ex.email=data.email; ex.segment=data.segment; ex.notes=data.notes; }
+  } else {
+    if(coFindByName(name)){ window.showToast('Essa empresa já existe no repositório.', 'error'); return; }
+    window.state.companies.push({ id:'CO'+Date.now(), name:name, contact:data.contact, phone:data.phone, email:data.email, segment:data.segment, notes:data.notes });
+  }
+  coSave();
+  var retLead = window.__sxCoReturnToLead; window.__sxCoReturnToLead=false; window.__sxCoEdit=null;
+  window.appActions.closeModal();
+  if(retLead){
+    window.appActions.openLeadModal();
+    var sel=document.getElementById('lead-company'); if(sel) sel.value=name;
+    var ct=document.getElementById('lead-name'); if(ct && data.contact) ct.value=data.contact;
+    var ph=document.getElementById('lead-phone'); if(ph && data.phone) ph.value=data.phone;
+  } else { renderContent(); }
+  window.showToast('Empresa salva no repositório.', 'success');
+};
+window.appActions.deleteCompany = function(id){
+  if(!sxRequireAdmin('excluir uma empresa')) return;
+  var c=(window.state.companies||[]).find(function(x){ return x.id===id; }); if(!c) return;
+  if(!confirm('Excluir "'+(c.name||'')+'" do repositório de empresas?')) return;
+  window.state.companies=(window.state.companies||[]).filter(function(x){ return x.id!==id; });
+  coSave(); renderContent(); window.showToast('Empresa removida.', 'success');
+};
+function sxCompanyRows(cs, canDelete){
+  if(!cs || cs.length===0) return '<tr><td colspan="6" style="text-align:center;padding:40px;color:#666">Nenhuma empresa cadastrada</td></tr>';
+  return cs.map(function(c){
+    var del = canDelete ? '<button onclick="window.appActions.deleteCompany(\''+c.id+'\')" style="color:#666;padding:4px;margin-left:4px" title="Excluir"><i data-lucide="trash-2" class="w-4 h-4"></i></button>' : '';
+    return '<tr style="border-top:1px solid #1a1a1a">'+
+      '<td style="padding:12px 14px;color:#fff;font-weight:700">'+window.escapeHTML(c.name||'-')+'</td>'+
+      '<td style="padding:12px 14px;color:#ccc">'+window.escapeHTML(c.contact||'-')+'</td>'+
+      '<td style="padding:12px 14px;color:#ccc">'+window.escapeHTML(c.phone||'-')+'</td>'+
+      '<td style="padding:12px 14px;color:#ccc">'+window.escapeHTML(c.email||'-')+'</td>'+
+      '<td style="padding:12px 14px;color:#aaa">'+window.escapeHTML(c.segment||'-')+'</td>'+
+      '<td style="padding:12px 14px;text-align:center"><button onclick="window.appActions.openCompanyModal(\''+c.id+'\')" style="color:#666;padding:4px" title="Editar"><i data-lucide="edit-2" class="w-4 h-4"></i></button>'+del+'</td>'+
+    '</tr>';
+  }).join('');
+}
+window.appActions.filterCompanies = function(){
+  var q=(document.getElementById('co-search').value||'').toLowerCase();
+  var cs=(window.state.companies||[]).filter(function(c){ return ((c.name||'')+' '+(c.contact||'')+' '+(c.segment||'')+' '+(c.email||'')+' '+(c.phone||'')).toLowerCase().indexOf(q)>=0; });
+  document.getElementById('co-tbody').innerHTML = sxCompanyRows(cs, window.appActions.isAdmin());
+  if(window.lucide) lucide.createIcons();
+};
+function getCompaniesHTML(){
+  var cs = window.state.companies||[];
+  var canDelete = window.appActions.isAdmin();
+  var thS = 'text-align:left;padding:12px 14px;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:800';
+  var html = '<div class="space-y-6 animate-fade-in pb-10">';
+  html += '<div class="flex items-end justify-between flex-wrap gap-4"><div><h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-3"><i data-lucide="building-2" class="text-orange-500 w-7 h-7"></i> Empresas & Contatos</h2><p class="text-sm text-gray-400 mt-1">Repositório central das empresas já cadastradas no comercial.</p></div>';
+  html += '<button onclick="window.appActions.openCompanyModal()" class="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition"><i data-lucide="plus" class="w-4 h-4"></i> Nova Empresa</button></div>';
+  html += '<div class="grid grid-cols-2 md:grid-cols-3 gap-4"><div class="bg-[#111] border border-[#222] rounded-2xl p-5"><div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Empresas cadastradas</div><div class="text-2xl font-black text-white">'+cs.length+'</div></div></div>';
+  html += '<input id="co-search" oninput="window.appActions.filterCompanies()" placeholder="Buscar por empresa, contato, segmento, e-mail..." class="w-full md:w-[28rem] bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-orange-500" />';
+  html += '<div class="bg-[#111] border border-[#222] rounded-2xl overflow-hidden"><div class="overflow-x-auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#0a0a0a">'+
+          '<th style="'+thS+'">Empresa</th><th style="'+thS+'">Contato</th><th style="'+thS+'">Telefone</th><th style="'+thS+'">E-mail</th><th style="'+thS+'">Segmento</th><th style="'+thS+';text-align:center"></th></tr></thead><tbody id="co-tbody">';
+  html += sxCompanyRows(cs, canDelete);
+  html += '</tbody></table></div></div></div>';
+  return html;
+}
+
+/* ---------- Catálogo de Produtos ---------- */
+function prodSave(){ try{ localStorage.setItem(PROD_KEY, JSON.stringify(window.state.products||[])); }catch(e){} }
+function prodLoad(){
+  var stored=null; try{ stored = JSON.parse(localStorage.getItem(PROD_KEY)); }catch(e){ stored=null; }
+  if(stored && stored.length){ window.state.products = stored; return stored; }
+  window.state.products = [
+    { id:'P1', name:'Gestão de Tráfego (Performance)', mrr:3000, setup:1500 },
+    { id:'P2', name:'Setup de CRM & Automação', mrr:0, setup:5000 },
+    { id:'P3', name:'Consultoria Scale (Advisory)', mrr:8000, setup:0 }
+  ];
+  prodSave(); return window.state.products;
+}
+function sxRenderProductPicker(){
+  var sel=document.getElementById('prop-product'); if(!sel) return;
+  var opts='<option value="">Selecione um produto...</option>';
+  (window.state.products||[]).forEach(function(p){ opts+='<option value="'+p.id+'">'+window.escapeHTML(p.name)+'</option>'; });
+  sel.innerHTML=opts;
+}
+function sxRenderProductList(){
+  var box=document.getElementById('prod-list'); if(!box) return;
+  var ps=window.state.products||[]; var html='';
+  if(ps.length===0){ html='<div class="text-center py-6 text-xs text-gray-600 border border-dashed border-[#333] rounded-xl">Nenhum produto cadastrado</div>'; }
+  ps.forEach(function(p){
+    var desc = p.description ? '<div class="text-[11px] text-gray-400 mt-1.5 leading-snug">'+window.escapeHTML(p.description)+'</div>' : '';
+    var linkBtn = p.link ? '<a href="'+window.escapeHTML(p.link)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="text-gray-500 hover:text-emerald-400 p-1" title="Abrir página de apresentação"><i data-lucide="external-link" class="w-4 h-4"></i></a>' : '';
+    html+='<div class="flex items-start justify-between bg-[#0a0a0a] border border-[#222] rounded-lg p-3"><div class="pr-3 min-w-0"><div class="text-sm font-bold text-white">'+window.escapeHTML(p.name)+'</div><div class="text-[11px] text-gray-500">MRR padrão '+window.formatCurrency(p.mrr||0)+' · Setup padrão '+window.formatCurrency(p.setup||0)+'</div>'+desc+'</div><div class="flex gap-1 shrink-0"><button onclick="window.appActions.editProduct(\''+p.id+'\')" class="text-gray-500 hover:text-orange-500 p-1" title="Editar"><i data-lucide="edit-2" class="w-4 h-4"></i></button>'+linkBtn+'<button onclick="window.appActions.deleteProduct(\''+p.id+'\')" class="text-gray-500 hover:text-red-500 p-1" title="Excluir"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>';
+  });
+  box.innerHTML=html; if(window.lucide) lucide.createIcons();
+}
+window.appActions.openProductCatalog = function(fromProp){
+  window.__sxProdFromProp = fromProp ? ((window.__sxProp && window.__sxProp.leadId) || null) : null;
+  window.__sxProdEdit=null;
+  sxClearProdForm();
+  document.getElementById('prod-form-title').innerText='Novo produto';
+  sxRenderProductList();
+  sxShow('modal-products');
+};
+window.appActions.closeProductCatalog = function(){
+  var back = window.__sxProdFromProp; window.__sxProdFromProp=null;
+  if(back){ window.appActions.openProposalModal(back, true); }
+  else { window.appActions.closeModal(); }
+};
+function sxNormalizeUrl(u){
+  u=(u||'').trim();
+  if(!u) return '';
+  if(!/^https?:\/\//i.test(u)) u='https://'+u;
+  return u;
+}
+function sxClearProdForm(){
+  document.getElementById('prod-name').value=''; document.getElementById('prod-mrr').value=''; document.getElementById('prod-setup').value='';
+  document.getElementById('prod-desc').value=''; document.getElementById('prod-link').value='';
+}
+window.appActions.newProduct = function(){
+  window.__sxProdEdit=null;
+  sxClearProdForm();
+  document.getElementById('prod-form-title').innerText='Novo produto';
+  document.getElementById('prod-name').focus();
+};
+window.appActions.editProduct = function(id){
+  var p=(window.state.products||[]).find(function(x){ return x.id===id; });
+  window.__sxProdEdit=id;
+  document.getElementById('prod-name').value = p?p.name:'';
+  document.getElementById('prod-mrr').value = p?window.formatNumberToBR(p.mrr||0):'';
+  document.getElementById('prod-setup').value = p?window.formatNumberToBR(p.setup||0):'';
+  document.getElementById('prod-desc').value = p?(p.description||''):'';
+  document.getElementById('prod-link').value = p?(p.link||''):'';
+  document.getElementById('prod-form-title').innerText = p?'Editar produto':'Novo produto';
+};
+window.appActions.saveProduct = function(){
+  var name=(document.getElementById('prod-name').value||'').trim();
+  if(!name){ window.showToast('Informe o nome do produto.', 'error'); return; }
+  var mrr=window.getValFromCurrency('prod-mrr'); var setup=window.getValFromCurrency('prod-setup');
+  var desc=(document.getElementById('prod-desc').value||'').trim();
+  var link=sxNormalizeUrl(document.getElementById('prod-link').value);
+  if(window.__sxProdEdit){ var p=(window.state.products||[]).find(function(x){ return x.id===window.__sxProdEdit; }); if(p){ p.name=name; p.mrr=mrr; p.setup=setup; p.description=desc; p.link=link; } }
+  else { window.state.products.push({ id:'P'+Date.now(), name:name, mrr:mrr, setup:setup, description:desc, link:link }); }
+  prodSave(); window.__sxProdEdit=null;
+  sxClearProdForm();
+  document.getElementById('prod-form-title').innerText='Novo produto';
+  sxRenderProductList(); sxRenderProductPicker();
+  window.showToast('Catálogo atualizado.', 'success');
+};
+window.appActions.deleteProduct = function(id){
+  if(!confirm('Excluir este produto do catálogo?')) return;
+  window.state.products=(window.state.products||[]).filter(function(x){ return x.id!==id; });
+  prodSave(); sxRenderProductList(); sxRenderProductPicker();
+};
+
+/* ---------- Propostas ---------- */
+window.__sxProp = { leadId:null, items:[] };
+window.appActions.openProposalModal = function(leadId, keep){
+  var lead=(window.state.leads||[]).find(function(l){ return l.id===leadId; });
+  if(!lead) return;
+  if(!(keep && window.__sxProp && window.__sxProp.leadId===leadId)){
+    window.__sxProp = { leadId:leadId, items:(lead.proposal && lead.proposal.items) ? JSON.parse(JSON.stringify(lead.proposal.items)) : [] };
+  }
+  document.getElementById('prop-company').innerText = lead.company || lead.name || '—';
+  document.getElementById('prop-mrr').value=''; document.getElementById('prop-setup').value='';
+  sxRenderProductPicker();
+  sxRenderProposalItems();
+  sxShow('modal-proposal');
+};
+window.appActions.propProductChange = function(){
+  var sel=document.getElementById('prop-product'); var p=(window.state.products||[]).find(function(x){ return x.id===sel.value; });
+  if(p){ document.getElementById('prop-mrr').value=window.formatNumberToBR(p.mrr||0); document.getElementById('prop-setup').value=window.formatNumberToBR(p.setup||0); }
+};
+window.appActions.propAddItem = function(){
+  var sel=document.getElementById('prop-product'); var p=(window.state.products||[]).find(function(x){ return x.id===sel.value; });
+  if(!p){ window.showToast('Selecione um produto.', 'error'); return; }
+  var mrr=window.getValFromCurrency('prop-mrr'); var setup=window.getValFromCurrency('prop-setup');
+  if(mrr===0 && setup===0){ window.showToast('Informe MRR ou Setup para o produto.', 'error'); return; }
+  window.__sxProp.items.push({ productId:p.id, name:p.name, mrr:mrr, setup:setup });
+  document.getElementById('prop-product').value=''; document.getElementById('prop-mrr').value=''; document.getElementById('prop-setup').value='';
+  sxRenderProposalItems();
+};
+window.appActions.propRemoveItem = function(idx){ window.__sxProp.items.splice(idx,1); sxRenderProposalItems(); };
+function sxRenderProposalItems(){
+  var box=document.getElementById('prop-items'); if(!box) return;
+  var items=window.__sxProp.items||[]; var tM=0,tS=0; var html='';
+  if(items.length===0){ html='<div class="text-center py-6 text-xs text-gray-600 border border-dashed border-[#333] rounded-xl">Nenhum produto na proposta ainda</div>'; }
+  else {
+    html='<div class="space-y-2">';
+    items.forEach(function(it,idx){ tM+=Number(it.mrr||0); tS+=Number(it.setup||0);
+      html+='<div class="flex items-center justify-between bg-[#0a0a0a] border border-[#222] rounded-lg p-3"><div><div class="text-sm font-bold text-white">'+window.escapeHTML(it.name)+'</div><div class="text-[11px] text-gray-500">MRR '+window.formatCurrency(it.mrr)+' · Setup '+window.formatCurrency(it.setup)+'</div></div><button onclick="window.appActions.propRemoveItem('+idx+')" class="text-gray-500 hover:text-red-500 p-1" title="Remover"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>';
+    });
+    html+='</div>';
+  }
+  box.innerHTML=html;
+  var em;
+  em=document.getElementById('prop-tot-mrr'); if(em) em.innerText=window.formatCurrency(tM);
+  em=document.getElementById('prop-tot-setup'); if(em) em.innerText=window.formatCurrency(tS);
+  em=document.getElementById('prop-tot-geral'); if(em) em.innerText=window.formatCurrency(tM+tS);
+  if(window.lucide) lucide.createIcons();
+}
+window.appActions.saveProposal = function(){
+  var lead=(window.state.leads||[]).find(function(l){ return l.id===window.__sxProp.leadId; });
+  if(!lead) return;
+  var items=window.__sxProp.items||[];
+  if(items.length===0){ window.showToast('Adicione ao menos um produto à proposta.', 'error'); return; }
+  var tM=items.reduce(function(s,i){ return s+Number(i.mrr||0); },0);
+  var tS=items.reduce(function(s,i){ return s+Number(i.setup||0); },0);
+  lead.proposal={ items:items, totalMrr:tM, totalSetup:tS, total:tM+tS, date:new Date().toLocaleDateString('pt-BR') };
+  lead.value = tM+tS;
+  lead.phase = 'Proposta Enviada';
+  window.appActions.closeModal();
+  renderContent();
+  window.showToast('Proposta salva! Lead movido para Proposta Enviada.', 'success');
+};
+
+/* ---------- Funil: mover etapas com gatekeeping ---------- */
+window.appActions.attemptMoveLead = function(id, targetPhase){
+  var lead=(window.state.leads||[]).find(function(l){ return l.id===id; });
+  if(!lead) return;
+  if(lead.phase===targetPhase) return;
+  if(targetPhase==='Fechado (I.O.S)'){ window.appActions.openCloseDealModal(id); return; }
+  if(targetPhase==='Proposta Enviada'){ window.appActions.openProposalModal(id); return; }
+  if(targetPhase==='Negociação'){
+    var temValor = Number(lead.value||0)>0 || (lead.proposal && Number(lead.proposal.total||0)>0);
+    if(!temValor){ window.showToast('Crie uma proposta com valor antes de mover para Negociação.', 'error'); window.appActions.openProposalModal(id); return; }
+  }
+  lead.phase=targetPhase;
+  renderContent();
+};
+window.appActions.moveLeadStage = function(id, dir){
+  var lead=(window.state.leads||[]).find(function(l){ return l.id===id; });
+  if(!lead) return;
+  var i=SX_CRM_STAGES.indexOf(lead.phase); if(i<0) i=0;
+  var ni=i+dir; if(ni<0 || ni>=SX_CRM_STAGES.length) return;
+  window.appActions.attemptMoveLead(id, SX_CRM_STAGES[ni]);
+};
+window.appActions.scrollCrm = function(dir){
+  var el=document.getElementById('crm-board-scroll'); if(!el) return;
+  var step = Math.max(340, Math.round(el.clientWidth * 0.8));
+  el.scrollBy({ left: dir*step, behavior:'smooth' });
+};
+window.appActions.deleteLead = function(id){
+  if(!sxRequireAdmin('excluir um lead')) return;
+  var l=(window.state.leads||[]).find(function(x){ return x.id===id; }); if(!l) return;
+  if(!confirm('Excluir o lead "'+(l.company||l.name||'')+'"? Esta ação não pode ser desfeita.')) return;
+  window.state.leads=window.state.leads.filter(function(x){ return x.id!==id; });
+  renderContent(); window.showToast('Lead excluído.', 'success');
+};
+
+/* ---------- Projetos: excluir, encerrar (churn), reativar ---------- */
+window.appActions.deleteClient = function(id){
+  if(!sxRequireAdmin('excluir um projeto')) return;
+  var c=(window.state.clients||[]).find(function(x){ return x.id===id; }); if(!c) return;
+  if(!confirm('Excluir o projeto "'+(c.name||'')+'"? Esta ação não pode ser desfeita.')) return;
+  window.state.clients=window.state.clients.filter(function(x){ return x.id!==id; });
+  renderContent(); window.showToast('Projeto excluído.', 'success');
+};
+window.appActions.deleteContractRow = function(id){
+  if(!sxRequireAdmin('excluir um contrato')) return;
+  var c=(window.state.clients||[]).find(function(x){ return x.id===id; }); if(!c) return;
+  if(!confirm('Excluir o contrato de "'+(c.name||'')+'"? Isso remove o registro do sistema e não pode ser desfeito.')) return;
+  window.state.clients=window.state.clients.filter(function(x){ return x.id!==id; });
+  renderContent(); window.showToast('Contrato excluído.', 'success');
+};
+window.appActions.encerrarProjeto = function(id){
+  var c=(window.state.clients||[]).find(function(x){ return x.id===id; }); if(!c) return;
+  if(!confirm('Mover "'+(c.name||'')+'" para Projetos Encerrados (Churn)?')) return;
+  c.status='Churn'; c.churnDate=new Date().toLocaleDateString('pt-BR');
+  renderContent(); window.showToast('Projeto movido para Encerrados.', 'success');
+};
+window.appActions.reativarProjeto = function(id){
+  var c=(window.state.clients||[]).find(function(x){ return x.id===id; }); if(!c) return;
+  c.status='Ativo';
+  renderContent(); window.showToast('Projeto reativado.', 'success');
+};
+function getClosedProjectsHTML(){
+  var clients=(window.state.clients||[]).filter(function(c){ return c.status==='Churn' || c.status==='Encerrado'; });
+  var canDelete=window.appActions.isAdmin();
+  var lostMrr=clients.reduce(function(s,c){ return s+Number(c.recurringValue||0); },0);
+  var html='<div class="space-y-6 animate-fade-in pb-10">';
+  html+='<div class="flex items-end justify-between flex-wrap gap-4"><div><h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-3"><i data-lucide="archive" class="text-gray-400 w-7 h-7"></i> Projetos Encerrados</h2><p class="text-sm text-gray-400 mt-1">Projetos que deram churn ou foram encerrados. Reative ou exclua quando necessário.</p></div></div>';
+  html+='<div class="grid grid-cols-2 md:grid-cols-3 gap-4">';
+  html+='<div class="bg-[#111] border border-[#222] rounded-2xl p-5"><div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Encerrados</div><div class="text-2xl font-black text-white">'+clients.length+'</div></div>';
+  html+='<div class="bg-[#111] border border-[#222] rounded-2xl p-5"><div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">MRR Perdido</div><div class="text-2xl font-black text-red-400">'+window.formatCurrency(lostMrr)+'</div></div>';
+  html+='</div>';
+  html+='<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">';
+  if(clients.length===0){ html+='<div class="col-span-full py-16 text-center border border-dashed border-[#333] rounded-2xl bg-[#0d0d0d]"><i data-lucide="archive" class="w-10 h-10 mx-auto text-gray-600 mb-3 opacity-50"></i><p class="text-gray-500 font-medium">Nenhum projeto encerrado.</p></div>'; }
+  clients.forEach(function(c){
+    var del = canDelete ? '<button onclick="window.appActions.deleteClient(\''+c.id+'\')" class="flex-1 py-2 rounded-lg text-xs font-bold bg-[#1a1a1a] border border-[#333] text-gray-400 hover:text-red-500 hover:border-red-900/50 transition flex items-center justify-center gap-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Excluir</button>' : '';
+    html+='<div class="bg-[#0d0d0d] border border-[#222] rounded-2xl p-5">'+
+      '<div class="flex items-start justify-between mb-2"><h4 class="text-sm font-bold text-white">'+window.escapeHTML(c.name||'Sem nome')+'</h4><span class="text-[9px] font-black uppercase px-2 py-0.5 rounded border text-gray-400 bg-[#1a1a1a] border-[#333]">Encerrado</span></div>'+
+      '<div class="text-[11px] text-gray-500 mb-3">'+window.escapeHTML(c.phase||'-')+'</div>'+
+      '<div class="flex items-center justify-between text-xs mb-1"><span class="text-gray-500">MRR perdido</span><span class="font-bold text-red-400">'+window.formatCurrency(Number(c.recurringValue||0))+'</span></div>'+
+      (c.churnDate ? '<div class="text-[10px] text-gray-600 mb-3">Encerrado em '+window.escapeHTML(c.churnDate)+'</div>' : '<div class="mb-3"></div>')+
+      '<div class="flex gap-2 mt-2"><button onclick="window.appActions.reativarProjeto(\''+c.id+'\')" class="flex-1 py-2 rounded-lg text-xs font-bold bg-emerald-900/20 border border-emerald-900/50 text-emerald-400 hover:bg-emerald-900/30 transition flex items-center justify-center gap-1"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reativar</button>'+del+'</div>'+
+    '</div>';
+  });
+  html+='</div></div>';
+  return html;
+}
+
+/* ---------- Inicialização dos repositórios ---------- */
+try{ coLoad(); prodLoad(); }catch(e){ console.warn('SCALEX ext init', e); }
+
 /* Expor funcoes ao escopo global (script principal e module) */
 Object.assign(window, {
   finOpenModal:finOpenModal, finCloseModal:finCloseModal, finSelTipo:finSelTipo, finToggleRec:finToggleRec,
@@ -2221,6 +2826,628 @@ Object.assign(window, {
   finSetView:finSetView, finChangeYear:finChangeYear, finExportDre:finExportDre, finSetCash:finSetCash,
   finInit:finInit, finBuildDre:finBuildDre, finRenderDre:finRenderDre
 });
+
+/* ============================================================ */
+/* ============  INTEGRAÇÃO FIREBASE (Auth + Firestore)  ====== */
+/* ============================================================ */
+(function(){
+  if(!window.sxDb || !window.sxAuth){ console.error('Firebase não inicializado — mantendo modo offline.'); return; }
+  var db = window.sxDb, auth = window.sxAuth;
+  var MASTER = (window.SCALEX_MASTER_EMAIL||'').toLowerCase();
+  var unsub = [];
+  var secondaryApp = null;
+
+  function clean(obj){ var o = JSON.parse(JSON.stringify(obj||{})); delete o.id; return o; }
+  function genId(p){ return (p||'') + Date.now() + Math.floor(Math.random()*1000); }
+  window.sxSet = function(col,id,obj){ return db.collection(col).doc(String(id)).set(clean(obj),{merge:true}).catch(function(e){ console.error('sxSet',col,e); window.showToast && window.showToast('Erro ao salvar ('+col+').','error'); }); };
+  window.sxUpdate = function(col,id,patch){ return db.collection(col).doc(String(id)).set(JSON.parse(JSON.stringify(patch)),{merge:true}).catch(function(e){ console.error('sxUpdate',col,e); window.showToast && window.showToast('Erro ao atualizar ('+col+').','error'); }); };
+  window.sxDelete = function(col,id){ return db.collection(col).doc(String(id)).delete().catch(function(e){ console.error('sxDelete',col,e); window.showToast && window.showToast('Erro ao excluir ('+col+').','error'); }); };
+
+  var rerenderTimer=null;
+  function rerender(){ if(rerenderTimer) clearTimeout(rerenderTimer); rerenderTimer=setTimeout(function(){ try{ renderNav(); renderContent(); }catch(e){ console.warn(e); } },60); }
+
+  function startListeners(){
+    stopListeners();
+    var cfgs=[
+      ['leads','leads',null],
+      ['clients','clients',null],
+      ['companies','companies',null],
+      ['products','products', function(){ try{ sxRenderProductList(); sxRenderProductPicker(); }catch(e){} }],
+      ['contracts','contracts',null],
+      ['expenses','expenses',null],
+      ['team','team',null],
+      ['users','users', function(){ var m=document.getElementById('users-modal'); if(m && !m.classList.contains('hidden')){ try{ window.appActions.renderUsersList(); }catch(e){} } try{ refreshOwnIdentity(); }catch(e){} }]
+    ];
+    var isAdminUser = window.state.currentUserRole==='Administrador';
+    var myUid = (window.state.user||{}).uid || '___none___';
+    cfgs.forEach(function(c){
+      var refq = db.collection(c[0]);
+      // SDR/Closer veem apenas os leads atribuídos a eles; admin vê todos
+      if(c[0]==='leads' && !isAdminUser){ refq = db.collection('leads').where('ownerUid','==',myUid); }
+      var u=refq.onSnapshot(function(snap){
+        var arr=[]; snap.forEach(function(d){ var o=d.data()||{}; o.id=d.id; arr.push(o); });
+        window.state[c[1]]=arr; if(c[2]) c[2](); rerender();
+      }, function(err){ console.error('listener '+c[0],err); });
+      unsub.push(u);
+    });
+    var uf=db.collection('lancamentos').onSnapshot(function(snap){
+      var arr=[]; snap.forEach(function(d){ var o=d.data()||{}; o.id=d.id; arr.push(o); });
+      finLan=arr; try{ if(window.state.activeTab==='dre'){ finRender(); finRenderDre(finBuildDre()); } }catch(e){}
+    }, function(err){ console.error('listener lancamentos',err); });
+    unsub.push(uf);
+  }
+  function stopListeners(){ unsub.forEach(function(u){ try{u();}catch(e){} }); unsub=[]; }
+
+  function seedIfNeeded(profile){
+    if(!(profile && profile.role==='Administrador')) return;
+    db.collection('meta').doc('seeded').get().then(function(d){
+      if(d.exists) return;
+      var batch=db.batch();
+      function put(col,arr){ (arr||[]).forEach(function(o){ batch.set(db.collection(col).doc(String(o.id||genId())), clean(o)); }); }
+      put('team',window.state.team); put('clients',window.state.clients); put('leads',window.state.leads);
+      put('contracts',window.state.contracts); put('expenses',window.state.expenses);
+      put('companies',window.state.companies); put('products',window.state.products); put('lancamentos',finLan);
+      batch.set(db.collection('meta').doc('seeded'),{ at:Date.now(), by:profile.email });
+      batch.commit().then(function(){ window.showToast && window.showToast('Dados iniciais migrados para o Firebase.','success'); }).catch(function(e){ console.error('seed',e); });
+    }).catch(function(e){ console.error('seed check',e); });
+  }
+
+  /* ---------- AUTH ---------- */
+  authInit = function(){ /* Firebase controla via onAuthStateChanged */ };
+
+  function applyProfile(p){
+    window.state.user={ displayName:p.name, email:p.email, uid:p.uid, photo:p.photo||'' };
+    window.state.currentUserRole=p.role;
+    var nm=document.getElementById('sidebar-user-name'); if(nm) nm.innerText=p.name;
+    var rl=document.getElementById('sidebar-user-role'); if(rl) rl.innerText=p.role;
+    var ph=document.getElementById('sidebar-user-photo'), ic=document.getElementById('sidebar-user-icon');
+    if(ph&&ic){ if(p.photo){ ph.src=p.photo; ph.classList.remove('hidden'); ic.classList.add('hidden'); } else { ph.classList.add('hidden'); ic.classList.remove('hidden'); } }
+    var mb=document.getElementById('btn-manage-users'); if(mb){ if(p.role==='Administrador'){ mb.classList.remove('hidden'); mb.classList.add('flex'); } else { mb.classList.add('hidden'); mb.classList.remove('flex'); } }
+    var sim=document.getElementById('role-simulator'); if(sim){ var w=sim.parentElement; if(w) w.style.display=(p.role==='Administrador')?'':'none'; }
+  }
+
+  auth.onAuthStateChanged(function(user){
+    if(!user){ stopListeners(); var ls=document.getElementById('login-screen'); if(ls) ls.classList.remove('hidden'); return; }
+    var email=(user.email||'').toLowerCase();
+    var ref=db.collection('users').doc(user.uid);
+    ref.get().then(function(doc){
+      var p;
+      if(doc.exists){ p=doc.data()||{}; }
+      else { p={ name:(user.email||'').split('@')[0], email:user.email, role:(email===MASTER?'Administrador':'Operacional') }; }
+      p.email=user.email; p.uid=user.uid;
+      if(email===MASTER){ p.role='Administrador'; p.master=true; }
+      if(!doc.exists && email!==MASTER){ window.showToast && window.showToast('Acesso não autorizado. Fale com o administrador.','error'); auth.signOut(); return; }
+      if(!doc.exists && email===MASTER){ ref.set({ name:p.name, email:user.email, role:'Administrador', master:true }); }
+      applyProfile(p);
+      var ls=document.getElementById('login-screen'); if(ls) ls.classList.add('hidden');
+      var le=document.getElementById('login-error'); if(le) le.classList.add('hidden');
+      var pw=document.getElementById('login-password'); if(pw) pw.value='';
+      startListeners(); seedIfNeeded(p);
+      try{ renderNav(); renderContent(); }catch(e){}
+      if(window.lucide) lucide.createIcons();
+    }).catch(function(e){ console.error('perfil',e); window.showToast && window.showToast('Erro ao carregar perfil.','error'); });
+  });
+
+  window.appActions.doLogin=function(){
+    var email=(document.getElementById('login-email').value||'').trim();
+    var pass=(document.getElementById('login-password').value||'');
+    var err=document.getElementById('login-error');
+    function se(m){ if(err){ err.innerText=m; err.classList.remove('hidden'); } }
+    if(!email){ se('Digite seu e-mail.'); return; }
+    if(!pass){ se('Digite sua senha.'); return; }
+    if(err) err.classList.add('hidden');
+    auth.signInWithEmailAndPassword(email,pass).catch(function(e){
+      var m='Não foi possível entrar.';
+      if(e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'||e.code==='auth/user-not-found') m='E-mail ou senha incorretos.';
+      else if(e.code==='auth/invalid-email') m='E-mail inválido.';
+      else if(e.code==='auth/too-many-requests') m='Muitas tentativas. Tente novamente em instantes.';
+      se(m);
+    });
+  };
+  window.appActions.doLogout=function(){
+    auth.signOut().then(function(){
+      var em=document.getElementById('login-email'); if(em) em.value='';
+      var pw=document.getElementById('login-password'); if(pw) pw.value='';
+      var er=document.getElementById('login-error'); if(er) er.classList.add('hidden');
+      var ls=document.getElementById('login-screen'); if(ls) ls.classList.remove('hidden');
+    });
+  };
+  window.appActions.resetPassword=function(){
+    var email=(document.getElementById('login-email').value||'').trim();
+    if(!email){ window.showToast && window.showToast('Digite seu e-mail para receber o link de redefinição.','error'); return; }
+    auth.sendPasswordResetEmail(email).then(function(){ window.showToast && window.showToast('Enviamos um link de redefinição para seu e-mail.','success'); }).catch(function(){ window.showToast && window.showToast('Não foi possível enviar o e-mail de redefinição.','error'); });
+  };
+
+  /* ---------- GERENCIAR USUÁRIOS ---------- */
+  function getSecondary(){ if(!secondaryApp){ secondaryApp=firebase.initializeApp(window.firebaseConfig,'Secondary'); } return secondaryApp; }
+  window.appActions.openUsersModal=function(){ window.appActions.renderUsersList(); var m=document.getElementById('users-modal'); m.classList.remove('hidden'); m.classList.add('flex'); if(window.lucide) lucide.createIcons(); };
+  window.appActions.addUser=function(){
+    if(window.state.currentUserRole!=='Administrador'){ alert('Apenas administradores podem criar usuários.'); return; }
+    var name=(document.getElementById('nu-name').value||'').trim();
+    var email=(document.getElementById('nu-email').value||'').trim().toLowerCase();
+    var pass=(document.getElementById('nu-password').value||'');
+    var role=document.getElementById('nu-role').value;
+    if(!name||!email){ alert('Preencha nome e e-mail.'); return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ alert('E-mail inválido.'); return; }
+    if(pass.length<6){ alert('A senha deve ter ao menos 6 caracteres.'); return; }
+    var sec=getSecondary();
+    sec.auth().createUserWithEmailAndPassword(email,pass).then(function(cred){
+      return db.collection('users').doc(cred.user.uid).set({ name:name, email:email, role:role }).then(function(){ return sec.auth().signOut(); });
+    }).then(function(){
+      document.getElementById('nu-name').value=''; document.getElementById('nu-email').value=''; document.getElementById('nu-password').value='';
+      window.showToast && window.showToast('Usuário criado com sucesso!','success');
+    }).catch(function(e){
+      var m='Erro ao criar usuário.';
+      if(e.code==='auth/email-already-in-use') m='Este e-mail já possui login.';
+      else if(e.code==='auth/weak-password') m='Senha muito fraca (mín. 6 caracteres).';
+      else if(e.code==='auth/invalid-email') m='E-mail inválido.';
+      alert(m); console.error(e);
+    });
+  };
+  window.appActions.removeUser=function(uid){
+    var u=(window.state.users||[]).find(function(x){ return x.id===uid; });
+    if(u && (u.master || (u.email||'').toLowerCase()===MASTER)){ alert('O administrador master não pode ser removido.'); return; }
+    if(!confirm('Remover o acesso deste usuário? (para apagar o login de vez, exclua também em Authentication no Console do Firebase)')) return;
+    db.collection('users').doc(String(uid)).delete().then(function(){ window.showToast && window.showToast('Acesso removido.','success'); });
+  };
+  window.appActions.changeUserRole=function(uid,role){
+    var u=(window.state.users||[]).find(function(x){ return x.id===uid; });
+    if(u && (u.master || (u.email||'').toLowerCase()===MASTER)){ alert('O master é sempre Administrador.'); window.appActions.renderUsersList(); return; }
+    db.collection('users').doc(String(uid)).set({ role:role },{merge:true});
+  };
+  window.appActions.renderUsersList=function(){
+    var t=document.getElementById('users-table'); if(!t) return; var us=window.state.users||[];
+    var th='text-align:left;padding:10px 12px;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:800';
+    var html='<thead><tr style="background:#0a0a0a"><th style="'+th+'">Nome</th><th style="'+th+'">E-mail</th><th style="'+th+'">Cargo</th><th style="'+th+';text-align:center"></th></tr></thead><tbody>';
+    us.forEach(function(u){
+      var isMaster=u.master || (u.email||'').toLowerCase()===MASTER;
+      var roles=['Administrador','Closer','SDR','Operacional'];
+      var opts=roles.map(function(r){ return '<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r+'</option>'; }).join('');
+      var sel='<select onchange="window.appActions.changeUserRole(\''+u.id+'\', this.value)" '+(isMaster?'disabled':'')+' style="background:#0a0a0a;border:1px solid #333;border-radius:6px;padding:5px 8px;color:#fff;font-size:12px">'+opts+'</select>';
+      var nome=(window.escapeHTML?window.escapeHTML(u.name||''):(u.name||''))+(isMaster?' <span style="font-size:9px;color:#ff5f1f;font-weight:800">MASTER</span>':'');
+      var del=isMaster?'':'<button onclick="window.appActions.removeUser(\''+u.id+'\')" style="color:#666;padding:4px"><i data-lucide="trash-2" class="w-4 h-4"></i></button>';
+      html+='<tr style="border-top:1px solid #1a1a1a"><td style="padding:10px 12px;color:#fff;font-weight:600">'+nome+'</td><td style="padding:10px 12px;color:#aaa">'+(window.escapeHTML?window.escapeHTML(u.email||''):(u.email||''))+'</td><td style="padding:10px 12px">'+sel+'</td><td style="padding:10px 12px;text-align:center">'+del+'</td></tr>';
+    });
+    html+='</tbody>'; t.innerHTML=html; if(window.lucide) lucide.createIcons();
+  };
+
+  /* ---------- MUTAÇÕES DE DADOS (Firestore) ---------- */
+  // Leads
+  window.appActions.saveLead=function(){
+    var id=document.getElementById('lead-id').value;
+    var company=document.getElementById('lead-company').value;
+    var name=document.getElementById('lead-name').value||company;
+    var phone=document.getElementById('lead-phone').value;
+    var emailEl=document.getElementById('lead-email'); var email=emailEl?(emailEl.value||'').trim():'';
+    var value=window.getValFromCurrency('lead-value');
+    var tag=document.getElementById('lead-tag').value;
+    var notes=document.getElementById('lead-notes').value;
+    if(!company){ window.showToast('Preencha o nome da empresa.','error'); return; }
+    if(id){ histPush('leads',id,{ company:company,name:name,phone:phone,email:email,value:value,tag:tag,notes:notes },'atualizou'); window.showToast('Lead atualizado!','success'); }
+    else { var m=me(); window.sxSet('leads',genId('L'),{ company:company,name:name,phone:phone,email:email,value:value,tag:tag,notes:notes,phase:'Tratativa Inicial', createdByUid:m.uid, createdByName:m.name, createdAt:new Date().toISOString(), ownerUid:m.uid, ownerName:m.name, history:[stamp('criou')] }); window.showToast('Lead adicionado!','success'); }
+    window.appActions.closeModal();
+  };
+  window.appActions.deleteLead=function(id){
+    if(window.state.currentUserRole!=='Administrador'){ window.showToast('Apenas o Administrador pode excluir um lead.','error'); return; }
+    var l=(window.state.leads||[]).find(function(x){return x.id===id;}); if(!l) return;
+    if(!confirm('Excluir o lead "'+(l.company||l.name||'')+'"?')) return;
+    window.sxDelete('leads',id); window.showToast('Lead excluído.','success');
+  };
+  window.appActions.attemptMoveLead=function(id,targetPhase){
+    var lead=(window.state.leads||[]).find(function(l){return l.id===id;}); if(!lead) return;
+    if(lead.phase===targetPhase) return;
+    if(targetPhase==='Fechado (I.O.S)'){ window.appActions.openCloseDealModal(id); return; }
+    if(targetPhase==='Reunião de Diagnóstico'){ window.appActions.openMeetingModal(id); return; }
+    if(targetPhase==='Proposta Enviada'){ window.appActions.openProposalModal(id); return; }
+    if(targetPhase==='Negociação'){ var ok=Number(lead.value||0)>0 || (lead.proposal && Number(lead.proposal.total||0)>0); if(!ok){ window.showToast('Crie uma proposta com valor antes de mover para Negociação.','error'); window.appActions.openProposalModal(id); return; } }
+    var dir = (SX_CRM_STAGES.indexOf(targetPhase) > SX_CRM_STAGES.indexOf(lead.phase)) ? 'avançou' : 'retrocedeu';
+    histPush('leads',id,{ phase:targetPhase },dir,{ from:lead.phase, to:targetPhase });
+  };
+  window.appActions.saveProposal=function(){
+    var lead=(window.state.leads||[]).find(function(l){return l.id===window.__sxProp.leadId;}); if(!lead) return;
+    var items=window.__sxProp.items||[];
+    if(items.length===0){ window.showToast('Adicione ao menos um produto à proposta.','error'); return; }
+    var tM=items.reduce(function(s,i){return s+Number(i.mrr||0);},0);
+    var tS=items.reduce(function(s,i){return s+Number(i.setup||0);},0);
+    histPush('leads',lead.id,{ proposal:{ items:items, totalMrr:tM, totalSetup:tS, total:tM+tS, date:new Date().toLocaleDateString('pt-BR') }, value:tM+tS, phase:'Proposta Enviada' },'enviou proposta',{ total:tM+tS });
+    window.appActions.closeModal(); window.showToast('Proposta salva! Lead movido para Proposta Enviada.','success');
+  };
+  window.appActions.confirmCloseDeal=function(){
+    var leadId=document.getElementById('close-lead-id').value;
+    var lead=(window.state.leads||[]).find(function(l){return l.id===leadId;});
+    var mrr=window.getValFromCurrency('close-mrr'); var setup=window.getValFromCurrency('close-setup');
+    var phaseIOS=document.getElementById('close-phase').value; var contractTime=document.getElementById('close-time').value;
+    if(mrr===0 && setup===0){ window.showToast('Informe o MRR ou Setup.','error'); return; }
+    var cm=me();
+    histPush('leads',leadId,{ phase:'Fechado (I.O.S)', value:(mrr+setup), closedByUid:cm.uid, closedByName:cm.name, closedAt:new Date().toISOString(), ownerUid:cm.uid, ownerName:cm.name },'fechou',{ mrr:mrr, setup:setup });
+    window.sxSet('clients','C_'+leadId,{ name:(lead?lead.company:'Novo cliente'), phase:phaseIOS, recurringValue:mrr, oneTimeValue:setup, status:'Ativo', contractMonths:contractTime, deliveryDate:new Date().toISOString().split('T')[0], system:'Criado via CRM', supplierCost:0, closedByUid:cm.uid, closedByName:cm.name });
+    window.appActions.closeModal(); window.showToast('Contrato fechado! Projeto gerado no I.O.S.','success');
+  };
+  // Projetos
+  window.appActions.saveClient=function(){
+    var id=document.getElementById('client-id').value;
+    var name=document.getElementById('client-name').value;
+    if(!name){ window.showToast('Preencha o nome do projeto.','error'); return; }
+    var data={ name:name, phase:document.getElementById('client-phase').value, status:document.getElementById('client-status').value, system:document.getElementById('client-system').value, contractMonths:document.getElementById('client-months').value, recurringValue:window.getValFromCurrency('client-recurringValue'), oneTimeValue:window.getValFromCurrency('client-oneTimeValue'), observation:document.getElementById('client-observation').value };
+    if(id){ window.sxUpdate('clients',id,data); window.showToast('Projeto atualizado!','success'); }
+    else { data.deliveryDate=new Date().toISOString().split('T')[0]; window.sxSet('clients',genId('C_'),data); window.showToast('Novo projeto iniciado!','success'); }
+    window.appActions.closeModal();
+  };
+  window.appActions.deleteClient=function(id){
+    if(window.state.currentUserRole!=='Administrador'){ window.showToast('Apenas o Administrador pode excluir um projeto.','error'); return; }
+    var c=(window.state.clients||[]).find(function(x){return x.id===id;}); if(!c) return;
+    if(!confirm('Excluir o projeto "'+(c.name||'')+'"?')) return;
+    window.sxDelete('clients',id); window.showToast('Projeto excluído.','success');
+  };
+  window.appActions.deleteContractRow=function(id){
+    if(window.state.currentUserRole!=='Administrador'){ window.showToast('Apenas o Administrador pode excluir um contrato.','error'); return; }
+    var c=(window.state.clients||[]).find(function(x){return x.id===id;}); if(!c) return;
+    if(!confirm('Excluir o contrato de "'+(c.name||'')+'"?')) return;
+    window.sxDelete('clients',id); window.showToast('Contrato excluído.','success');
+  };
+  window.appActions.encerrarProjeto=function(id){
+    var c=(window.state.clients||[]).find(function(x){return x.id===id;}); if(!c) return;
+    if(!confirm('Mover "'+(c.name||'')+'" para Projetos Encerrados (Churn)?')) return;
+    window.sxUpdate('clients',id,{ status:'Churn', churnDate:new Date().toLocaleDateString('pt-BR') }); window.showToast('Projeto movido para Encerrados.','success');
+  };
+  window.appActions.reativarProjeto=function(id){ window.sxUpdate('clients',id,{ status:'Ativo' }); window.showToast('Projeto reativado.','success'); };
+  // Empresas
+  window.appActions.saveCompany=function(){
+    var name=(document.getElementById('co-name').value||'').trim();
+    if(!name){ window.showToast('Informe o nome da empresa.','error'); return; }
+    var data={ name:name, contact:(document.getElementById('co-contact').value||'').trim(), phone:(document.getElementById('co-phone').value||'').trim(), email:(document.getElementById('co-email').value||'').trim(), segment:(document.getElementById('co-segment').value||'').trim(), notes:(document.getElementById('co-notes').value||'').trim() };
+    if(window.__sxCoEdit){ window.sxUpdate('companies',window.__sxCoEdit,data); }
+    else { var dup=(window.state.companies||[]).find(function(c){return (c.name||'').trim().toLowerCase()===name.toLowerCase();}); if(dup){ window.showToast('Essa empresa já existe no repositório.','error'); return; } window.sxSet('companies',genId('CO'),data); }
+    var retLead=window.__sxCoReturnToLead; window.__sxCoReturnToLead=false; window.__sxCoEdit=null;
+    window.appActions.closeModal();
+    if(retLead){ window.appActions.openLeadModal(); var sel=document.getElementById('lead-company'); if(sel){ if(![].some.call(sel.options,function(o){return o.value===name;})){ var op=document.createElement('option'); op.value=name; op.text=name; sel.insertBefore(op, sel.options[sel.options.length-1]); } sel.value=name; } var ct=document.getElementById('lead-name'); if(ct && data.contact) ct.value=data.contact; var ph=document.getElementById('lead-phone'); if(ph && data.phone) ph.value=data.phone; }
+    window.showToast('Empresa salva no repositório.','success');
+  };
+  window.appActions.deleteCompany=function(id){
+    if(window.state.currentUserRole!=='Administrador'){ window.showToast('Apenas o Administrador pode excluir uma empresa.','error'); return; }
+    var c=(window.state.companies||[]).find(function(x){return x.id===id;}); if(!c) return;
+    if(!confirm('Excluir "'+(c.name||'')+'" do repositório?')) return;
+    window.sxDelete('companies',id); window.showToast('Empresa removida.','success');
+  };
+  // Produtos
+  window.appActions.saveProduct=function(){
+    var name=(document.getElementById('prod-name').value||'').trim();
+    if(!name){ window.showToast('Informe o nome do produto.','error'); return; }
+    var link=(function(u){ u=(u||'').trim(); if(u&&!/^https?:\/\//i.test(u)) u='https://'+u; return u; })(document.getElementById('prod-link').value);
+    var data={ name:name, mrr:window.getValFromCurrency('prod-mrr'), setup:window.getValFromCurrency('prod-setup'), description:(document.getElementById('prod-desc').value||'').trim(), link:link };
+    if(window.__sxProdEdit){ window.sxUpdate('products',window.__sxProdEdit,data); } else { window.sxSet('products',genId('P'),data); }
+    window.__sxProdEdit=null;
+    document.getElementById('prod-name').value=''; document.getElementById('prod-mrr').value=''; document.getElementById('prod-setup').value=''; document.getElementById('prod-desc').value=''; document.getElementById('prod-link').value='';
+    document.getElementById('prod-form-title').innerText='Novo produto';
+    window.showToast('Catálogo atualizado.','success');
+  };
+  window.appActions.deleteProduct=function(id){ if(!confirm('Excluir este produto do catálogo?')) return; window.sxDelete('products',id); };
+  // Equipe
+  window.appActions.saveTeam=function(){
+    var id=document.getElementById('team-id').value;
+    var name=document.getElementById('team-name').value;
+    if(!name){ window.showToast('Preencha o nome do integrante.','error'); return; }
+    var data={ name:name, role:document.getElementById('team-role').value, department:document.getElementById('team-department').value, cost:window.getValFromCurrency('team-cost'), photo:document.getElementById('team-photo-base64').value, systemRole:document.getElementById('team-system-role').value, email:(document.getElementById('team-email').value||'').trim().toLowerCase() };
+    if(id){ window.sxUpdate('team',id,data); window.showToast('Membro atualizado!','success'); } else { window.sxSet('team',genId('T'),data); window.showToast('Membro cadastrado!','success'); }
+    window.appActions.closeModal();
+  };
+  window.appActions.deleteTeam=function(id){ window.sxDelete('team',id); window.showToast('Membro removido da equipe.','success'); };
+  // Despesas
+  window.appActions.saveExpense=function(){
+    var id=document.getElementById('expense-id').value;
+    var name=document.getElementById('expense-name').value;
+    if(!name){ window.showToast('Preencha a descrição da ferramenta.','error'); return; }
+    var data={ name:name, amount:window.getValFromCurrency('expense-amount'), clientId:document.getElementById('expense-clientId').value };
+    if(id){ window.sxUpdate('expenses',id,data); window.showToast('Despesa atualizada!','success'); } else { window.sxSet('expenses',genId('E'),data); window.showToast('Custo adicionado!','success'); }
+    window.appActions.closeModal();
+  };
+  window.appActions.deleteExpense=function(id){ window.sxDelete('expenses',id); window.showToast('Custo removido.','success'); };
+  // Contratos (upload)
+  window.appActions.saveUploadedContract=function(){
+    var clientName=document.getElementById('upload-client-name').value;
+    var phase=document.getElementById('upload-contract-phase').value;
+    var fileInput=document.getElementById('upload-file-input');
+    if(!clientName){ window.showToast('Selecione um cliente.','error'); return; }
+    if(!fileInput.files || fileInput.files.length===0){ window.showToast('Anexe o arquivo PDF.','error'); return; }
+    window.sxSet('contracts',genId('CT'),{ clientName:clientName, phase:phase, status:'Assinado', date:new Date().toLocaleDateString('pt-BR'), fileName:fileInput.files[0].name, isOnline:false });
+    window.showToast('Contrato salvo com sucesso!','success'); window.appActions.closeModal();
+  };
+
+  /* ---------- FINANCEIRO (lancamentos) ---------- */
+  finLoadStore=function(){ /* dados vêm do Firestore (listener) */ };
+  finSaveStore=function(){ /* persistência via Firestore */ };
+  window.finSave=function(){
+    if(!finSelTipoVal){ alert('Selecione o tipo'); return; }
+    var cat=document.getElementById('fin-m-cat').value, desc=document.getElementById('fin-m-desc').value.trim(), valor=parseFloat(document.getElementById('fin-m-valor').value), data=document.getElementById('fin-m-data').value;
+    if(!cat||!desc||!valor||!data){ alert('Preencha os campos obrigatorios'); return; }
+    var base={ tipo:finSelTipoVal, categoria:cat, descricao:desc, valor:Math.abs(valor), data:data, status:document.getElementById('fin-m-status').value, forma:document.getElementById('fin-m-forma').value, vinculo:document.getElementById('fin-m-vinc').value.trim() };
+    if(finEditId){ window.sxSet('lancamentos',finEditId,base); }
+    else if(document.getElementById('fin-m-rec').checked){
+      var freq=document.getElementById('fin-m-freq').value, rep=parseInt(document.getElementById('fin-m-rep').value)||1, step=freq==='mensal'?1:freq==='trimestral'?3:freq==='semestral'?6:12, bd=new Date(data+'T12:00:00'); var b=db.batch();
+      for(var k=0;k<rep;k++){ var dd=new Date(bd); dd.setMonth(dd.getMonth()+k*step); b.set(db.collection('lancamentos').doc('L'+Date.now()+'_'+k), Object.assign({},base,{data:dd.toISOString().split('T')[0]})); }
+      b.commit();
+    } else { window.sxSet('lancamentos','L'+Date.now(),base); }
+    finCloseModal();
+  };
+  window.finDelete=function(){ if(!finEditId) return; if(!confirm('Excluir este lancamento?')) return; window.sxDelete('lancamentos',finEditId); finCloseModal(); };
+  window.finQuickDelete=function(id){ if(!confirm('Excluir?')) return; window.sxDelete('lancamentos',id); };
+  window.finClearAll=function(){ if(!confirm('Tem certeza? Todos os lancamentos serao apagados. Esta acao e irreversivel.')) return; db.collection('lancamentos').get().then(function(snap){ var b=db.batch(); snap.forEach(function(d){ b.delete(d.ref); }); return b.commit(); }); };
+  window.finSeed=function(){
+    if((finLan.length>0) && !confirm('Ja ha lancamentos. Adicionar exemplos?')) return;
+    var y=finYear, mk=function(mes,dia){ return new Date(y,mes,dia).toISOString().split('T')[0]; };
+    var ex=[
+      {tipo:'receita',categoria:'Receita Recorrente (MRR)',descricao:'Mensalidade Acme Corp',valor:1500,data:mk(0,5),status:'pago',forma:'pix',vinculo:'Acme Corp'},
+      {tipo:'receita',categoria:'Setup',descricao:'Implementacao Beta Ltda',valor:2000,data:mk(0,10),status:'pago',forma:'transferencia',vinculo:'Beta Ltda'},
+      {tipo:'receita',categoria:'Receita Recorrente (MRR)',descricao:'Mensalidade Gama SA',valor:1500,data:mk(1,5),status:'pago',forma:'boleto',vinculo:'Gama SA'},
+      {tipo:'despesa',categoria:'Midia / Marketing',descricao:'Meta Ads',valor:2000,data:mk(0,3),status:'pago',forma:'cartao'},
+      {tipo:'despesa',categoria:'Aluguel',descricao:'Aluguel escritorio',valor:3500,data:mk(0,8),status:'pago',forma:'transferencia'},
+      {tipo:'despesa',categoria:'Pro-labore',descricao:'Pro-labore socio',valor:5000,data:mk(0,30),status:'pago',forma:'transferencia'},
+      {tipo:'custo',categoria:'Comissoes de Vendas',descricao:'Comissao Luan',valor:1200,data:mk(0,28),status:'pago',forma:'pix',vinculo:'Luan'},
+      {tipo:'imposto',categoria:'Simples Nacional',descricao:'DAS',valor:680,data:mk(0,20),status:'pago',forma:'boleto'},
+      {tipo:'financeiro',categoria:'Receitas Financeiras',descricao:'Rendimento CDB',valor:120,data:mk(0,6),status:'pago'}
+    ];
+    var b=db.batch(); ex.forEach(function(e){ b.set(db.collection('lancamentos').doc('L'+Date.now()+Math.floor(Math.random()*100000)), e); }); b.commit();
+  };
+
+  /* ---------- Atribuição / Histórico (comissionamento) ---------- */
+  function me(){ var u=window.state.user||{}; return { uid:u.uid||'', name:u.displayName||u.email||'—' }; }
+  function stamp(action, extra){ var m=me(); return Object.assign({ at:new Date().toISOString(), byUid:m.uid, byName:m.name, action:action }, extra||{}); }
+  function histPush(col, id, patch, action, extra){
+    var p = patch ? JSON.parse(JSON.stringify(patch)) : {};
+    var m=me();
+    p.lastUpdatedByName=m.name; p.lastUpdatedByUid=m.uid; p.lastUpdatedAt=new Date().toISOString();
+    p.history = firebase.firestore.FieldValue.arrayUnion(stamp(action, extra));
+    return db.collection(col).doc(String(id)).set(p,{merge:true}).catch(function(e){ console.error('histPush',col,e); window.showToast && window.showToast('Erro ao registrar histórico.','error'); });
+  }
+  function fmtDT(iso){ try{ var d=new Date(iso); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return iso||''; } }
+  var SX_ACT_ICON={ 'criou':'plus-circle','atualizou':'edit-3','avançou':'arrow-right-circle','retrocedeu':'arrow-left-circle','enviou proposta':'file-text','fechou':'check-circle','transferiu':'repeat','definiu prazo':'calendar-clock','removeu prazo':'calendar-x','agendou reunião':'calendar-check' };
+
+  function sxCanTransfer(lead){
+    var u=window.state.user||{};
+    if(window.state.currentUserRole==='Administrador') return true;
+    if(lead.ownerUid && lead.ownerUid===u.uid) return true;
+    if(!lead.ownerUid && lead.createdByUid && lead.createdByUid===u.uid) return true;
+    return false;
+  }
+  window.appActions.transferLead=function(){
+    var id=document.getElementById('lead-id').value;
+    var lead=(window.state.leads||[]).find(function(l){ return l.id===id; });
+    if(!lead){ return; }
+    if(!sxCanTransfer(lead)){ window.showToast('Apenas o responsável atual ou um administrador pode transferir.','error'); return; }
+    var sel=document.getElementById('lead-transfer-select'); var uid=sel?sel.value:'';
+    if(!uid){ window.showToast('Selecione para quem transferir.','error'); return; }
+    var target=(window.state.users||[]).find(function(x){ return x.id===uid; });
+    if(!target){ window.showToast('Usuário não encontrado.','error'); return; }
+    if(lead.ownerUid===uid){ window.showToast('Esse usuário já é o responsável.','error'); return; }
+    var fromName=lead.ownerName||lead.createdByName||'—';
+    histPush('leads',id,{ ownerUid:uid, ownerName:target.name },'transferiu',{ fromOwner:fromName, toOwner:target.name });
+    var on=document.getElementById('lead-owner-name'); if(on) on.innerText=target.name;
+    window.showToast('Lead transferido para '+target.name+'.','success');
+  };
+
+  function refreshOwnIdentity(){
+    var u=window.state.user; if(!u||!u.uid) return;
+    var d=(window.state.users||[]).find(function(x){ return x.id===u.uid; }); if(!d) return;
+    u.displayName=d.name; u.photo=d.photo||'';
+    var nm=document.getElementById('sidebar-user-name'); if(nm) nm.innerText=d.name||u.email;
+    var ph=document.getElementById('sidebar-user-photo'), ic=document.getElementById('sidebar-user-icon');
+    if(ph&&ic){ if(d.photo){ ph.src=d.photo; ph.classList.remove('hidden'); ic.classList.add('hidden'); } else { ph.classList.add('hidden'); ic.classList.remove('hidden'); } }
+  }
+
+  /* Histórico exibido no modal do lead */
+  var _origOpenLeadModal = window.appActions.openLeadModal;
+  window.appActions.openLeadModal = function(id){
+    if(_origOpenLeadModal) _origOpenLeadModal(id);
+    var wrap=document.getElementById('lead-history-wrap'), box=document.getElementById('lead-history');
+    var oWrap=document.getElementById('lead-owner-wrap');
+    var lead = id ? (window.state.leads||[]).find(function(l){ return l.id===id; }) : null;
+    var emEl=document.getElementById('lead-email'); if(emEl) emEl.value = (lead && lead.email) ? lead.email : '';
+    if(!lead){ if(wrap){ wrap.classList.add('hidden'); } if(box){ box.innerHTML=''; } if(oWrap){ oWrap.classList.add('hidden'); } return; }
+    // Responsável + transferência
+    if(oWrap){
+      oWrap.classList.remove('hidden');
+      var on=document.getElementById('lead-owner-name'); if(on) on.innerText = lead.ownerName || lead.createdByName || '—';
+      var tbox=document.getElementById('lead-transfer-box'), tsel=document.getElementById('lead-transfer-select');
+      if(sxCanTransfer(lead) && tbox && tsel){
+        var opts='<option value="">Selecione quem vai receber...</option>';
+        (window.state.users||[]).forEach(function(us){ if(us.id===lead.ownerUid) return; opts+='<option value="'+us.id+'">'+window.escapeHTML(us.name||us.email||'')+' ('+window.escapeHTML(us.role||'')+')</option>'; });
+        tsel.innerHTML=opts; tbox.classList.remove('hidden'); tbox.classList.add('flex');
+      } else if(tbox){ tbox.classList.add('hidden'); tbox.classList.remove('flex'); }
+    }
+    if(!wrap||!box) return;
+    var hist=(lead.history||[]).slice().sort(function(a,b){ return (a.at||'').localeCompare(b.at||''); });
+    var html='';
+    html+='<div class="text-[11px] text-gray-400">Criado por <b class="text-white">'+window.escapeHTML(lead.createdByName||lead.ownerName||'—')+'</b>'+(lead.createdAt?' em '+fmtDT(lead.createdAt):'')+'</div>';
+    if(lead.closedByName){ html+='<div class="text-[11px] text-emerald-400 mb-1">Fechado por <b>'+window.escapeHTML(lead.closedByName)+'</b>'+(lead.closedAt?' em '+fmtDT(lead.closedAt):'')+'</div>'; }
+    if(hist.length===0){ html+='<div class="text-[11px] text-gray-600">Sem eventos registrados.</div>'; }
+    hist.forEach(function(h){
+      var ic=SX_ACT_ICON[h.action]||'dot';
+      var det='';
+      if(h.from&&h.to) det=' <span class="text-gray-500">('+window.escapeHTML(h.from)+' → '+window.escapeHTML(h.to)+')</span>';
+      else if(h.toOwner) det=' <span class="text-gray-500">(para '+window.escapeHTML(h.toOwner)+')</span>';
+      else if(h.closer) det=' <span class="text-gray-500">(closer: '+window.escapeHTML(h.closer)+')</span>';
+      else if(h.to) det=' <span class="text-gray-500">('+window.escapeHTML(h.to)+')</span>';
+      var lk = h.link ? ' · <a href="'+window.escapeHTML(h.link)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="text-orange-400 hover:underline">abrir agenda</a>' : '';
+      html+='<div class="flex items-start gap-2 text-[11px] bg-[#0a0a0a] border border-[#222] rounded-lg p-2"><i data-lucide="'+ic+'" class="w-3.5 h-3.5 text-orange-400 mt-0.5 shrink-0"></i><div><span class="text-white font-bold">'+window.escapeHTML(h.byName||'—')+'</span> <span class="text-gray-400">'+window.escapeHTML(h.action||'')+'</span>'+det+'<div class="text-gray-600">'+fmtDT(h.at)+lk+'</div></div></div>';
+    });
+    box.innerHTML=html; wrap.classList.remove('hidden');
+    if(window.lucide) lucide.createIcons();
+  };
+
+  /* ---------- Painel "Meu Perfil" ---------- */
+  window.appActions.openProfileModal=function(){
+    var u=window.state.user||{};
+    document.getElementById('pf-name').value=u.displayName||'';
+    document.getElementById('pf-email').value=u.email||'';
+    document.getElementById('pf-pass1').value=''; document.getElementById('pf-pass2').value='';
+    var b64=u.photo||''; document.getElementById('pf-photo-base64').value=b64;
+    var pv=document.getElementById('pf-photo-preview'), pl=document.getElementById('pf-photo-placeholder');
+    if(b64){ pv.src=b64; pv.classList.remove('hidden'); pl.classList.add('hidden'); } else { pv.classList.add('hidden'); pl.classList.remove('hidden'); }
+    var m=document.getElementById('modal-profile'); m.classList.remove('hidden'); m.classList.add('flex'); if(window.lucide) lucide.createIcons();
+  };
+  window.appActions.closeProfileModal=function(){ var m=document.getElementById('modal-profile'); m.classList.add('hidden'); m.classList.remove('flex'); };
+  window.appActions.profilePhotoPick=function(input){
+    if(!input.files||!input.files[0]) return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var max=256, w=img.width, h=img.height;
+        if(w>h){ if(w>max){ h=Math.round(h*max/w); w=max; } } else { if(h>max){ w=Math.round(w*max/h); h=max; } }
+        var c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+        var b64=c.toDataURL('image/jpeg',0.82);
+        document.getElementById('pf-photo-base64').value=b64;
+        var pv=document.getElementById('pf-photo-preview'), pl=document.getElementById('pf-photo-placeholder');
+        pv.src=b64; pv.classList.remove('hidden'); pl.classList.add('hidden');
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  };
+  window.appActions.saveProfile=function(){
+    var u=window.state.user||{}; if(!u.uid){ window.showToast('Sessão não encontrada.','error'); return; }
+    var name=(document.getElementById('pf-name').value||'').trim();
+    if(!name){ window.showToast('Informe seu nome.','error'); return; }
+    var photo=document.getElementById('pf-photo-base64').value||'';
+    db.collection('users').doc(u.uid).set({ name:name, photo:photo },{merge:true}).then(function(){
+      try{ if(auth.currentUser) auth.currentUser.updateProfile({ displayName:name }); }catch(e){}
+      u.displayName=name; u.photo=photo;
+      var nm=document.getElementById('sidebar-user-name'); if(nm) nm.innerText=name;
+      var ph=document.getElementById('sidebar-user-photo'), ic=document.getElementById('sidebar-user-icon');
+      if(ph&&ic){ if(photo){ ph.src=photo; ph.classList.remove('hidden'); ic.classList.add('hidden'); } else { ph.classList.add('hidden'); ic.classList.remove('hidden'); } }
+      window.showToast('Perfil atualizado!','success');
+    }).catch(function(e){ console.error(e); window.showToast('Erro ao salvar perfil.','error'); });
+  };
+  window.appActions.changeOwnPassword=function(){
+    var p1=document.getElementById('pf-pass1').value, p2=document.getElementById('pf-pass2').value;
+    if((p1||'').length<6){ window.showToast('A senha deve ter ao menos 6 caracteres.','error'); return; }
+    if(p1!==p2){ window.showToast('As senhas não conferem.','error'); return; }
+    if(!auth.currentUser){ window.showToast('Sessão não encontrada.','error'); return; }
+    auth.currentUser.updatePassword(p1).then(function(){
+      document.getElementById('pf-pass1').value=''; document.getElementById('pf-pass2').value='';
+      window.showToast('Senha atualizada com sucesso!','success');
+    }).catch(function(e){
+      if(e.code==='auth/requires-recent-login'){ window.showToast('Por segurança, saia e entre novamente antes de trocar a senha.','error'); }
+      else { window.showToast('Erro ao atualizar senha.','error'); console.error(e); }
+    });
+  };
+
+  /* ---------- Prazo de atendimento (vencimento) ---------- */
+  window.appActions.openDueDateModal=function(id){
+    var lead=(window.state.leads||[]).find(function(l){ return l.id===id; }); if(!lead) return;
+    document.getElementById('dd-lead-id').value=id;
+    document.getElementById('dd-date').value=lead.dueDate||'';
+    var m=document.getElementById('modal-duedate'); m.classList.remove('hidden'); m.classList.add('flex'); if(window.lucide) lucide.createIcons();
+  };
+  window.appActions.closeDueDateModal=function(){ var m=document.getElementById('modal-duedate'); m.classList.add('hidden'); m.classList.remove('flex'); };
+  window.appActions.saveDueDate=function(){
+    var id=document.getElementById('dd-lead-id').value; var d=document.getElementById('dd-date').value;
+    if(!d){ window.showToast('Selecione uma data.','error'); return; }
+    histPush('leads',id,{ dueDate:d },'definiu prazo',{ to:d });
+    window.appActions.closeDueDateModal(); window.showToast('Prazo definido.','success');
+  };
+  window.appActions.clearDueDate=function(){
+    var id=document.getElementById('dd-lead-id').value;
+    histPush('leads',id,{ dueDate:'' },'removeu prazo');
+    window.appActions.closeDueDateModal(); window.showToast('Prazo removido.','success');
+  };
+
+  /* ---------- Google Agenda (Calendar API via Google Identity Services) ---------- */
+  var gcalToken=null, gcalExp=0, gcalClient=null, gcalPending=null;
+  function gcalConfigured(){ return !!(window.GOOGLE_CLIENT_ID && window.google && google.accounts && google.accounts.oauth2); }
+  function gcalGetToken(cb){
+    if(gcalToken && Date.now()<gcalExp-60000){ cb(gcalToken); return; }
+    if(!gcalConfigured()){ cb(null,'config'); return; }
+    gcalPending=cb;
+    if(!gcalClient){
+      gcalClient=google.accounts.oauth2.initTokenClient({
+        client_id:window.GOOGLE_CLIENT_ID,
+        scope:'https://www.googleapis.com/auth/calendar.events',
+        callback:function(resp){
+          if(resp && resp.access_token){ gcalToken=resp.access_token; gcalExp=Date.now()+((resp.expires_in||3600)*1000); if(gcalPending) gcalPending(gcalToken); }
+          else { if(gcalPending) gcalPending(null,'denied'); }
+        }
+      });
+    }
+    gcalClient.requestAccessToken({ prompt: gcalToken?'':'consent' });
+  }
+  function gcalCreateEvent(ev, onOk, onErr){
+    gcalGetToken(function(token, err){
+      if(!token){ onErr && onErr(err||'no-token'); return; }
+      fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all&conferenceDataVersion=1',{
+        method:'POST', headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' }, body:JSON.stringify(ev)
+      }).then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+        .then(function(res){ if(res.ok){ onOk && onOk(res.j); } else { onErr && onErr((res.j&&res.j.error&&res.j.error.message)||'erro'); } })
+        .catch(function(e){ onErr && onErr(String(e)); });
+    });
+  }
+  function pad2(n){ return (n<10?'0':'')+n; }
+  function fmtLocal(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'T'+pad2(d.getHours())+':'+pad2(d.getMinutes())+':00'; }
+
+  /* ---------- Agendar Reunião de Diagnóstico ---------- */
+  window.appActions.openMeetingModal=function(id){
+    var lead=(window.state.leads||[]).find(function(l){ return l.id===id; }); if(!lead) return;
+    document.getElementById('mt-lead-id').value=id;
+    document.getElementById('mt-company').innerText=lead.company||lead.name||'—';
+    document.getElementById('mt-client-email').value=lead.email||'';
+    var sel=document.getElementById('mt-closer');
+    var closers=(window.state.users||[]).filter(function(u){ return (u.role==='Closer'||u.role==='Administrador') && u.email; });
+    var opts='<option value="">Selecione o closer...</option>';
+    closers.forEach(function(u){ opts+='<option value="'+window.escapeHTML(u.email)+'" data-name="'+window.escapeHTML(u.name||'')+'">'+window.escapeHTML(u.name||u.email)+' ('+window.escapeHTML(u.role)+')</option>'; });
+    sel.innerHTML=opts;
+    var d=new Date(); d.setDate(d.getDate()+1); d.setHours(10,0,0,0);
+    document.getElementById('mt-datetime').value=fmtLocal(d).slice(0,16);
+    document.getElementById('mt-duration').value='45';
+    document.getElementById('mt-meet').checked=true;
+    var note=document.getElementById('mt-note');
+    if(!window.GOOGLE_CLIENT_ID){ note.innerHTML='⚠️ Google Agenda ainda não configurado — use "Mover sem agendar" por enquanto. Passo a passo no arquivo GUIA-GOOGLE-AGENDA.md.'; }
+    else { note.innerText='O evento será criado na sua Google Agenda, convidando o closer e o cliente por e-mail.'; }
+    var m=document.getElementById('modal-meeting'); m.classList.remove('hidden'); m.classList.add('flex'); if(window.lucide) lucide.createIcons();
+  };
+  window.appActions.closeMeetingModal=function(){ var m=document.getElementById('modal-meeting'); m.classList.add('hidden'); m.classList.remove('flex'); };
+  window.appActions.meetingMoveOnly=function(){
+    var id=document.getElementById('mt-lead-id').value;
+    var lead=(window.state.leads||[]).find(function(l){ return l.id===id; }); if(!lead){ window.appActions.closeMeetingModal(); return; }
+    histPush('leads',id,{ phase:'Reunião de Diagnóstico' },'avançou',{ from:lead.phase, to:'Reunião de Diagnóstico' });
+    window.appActions.closeMeetingModal(); window.showToast('Lead movido para Reunião de Diagnóstico.','success');
+  };
+  window.appActions.confirmMeeting=function(){
+    var id=document.getElementById('mt-lead-id').value;
+    var lead=(window.state.leads||[]).find(function(l){ return l.id===id; }); if(!lead) return;
+    var sel=document.getElementById('mt-closer'); var closerEmail=sel.value;
+    var closerName=(sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].getAttribute('data-name')) || closerEmail;
+    var clientEmail=(document.getElementById('mt-client-email').value||'').trim();
+    var dtLocal=document.getElementById('mt-datetime').value;
+    var dur=parseInt(document.getElementById('mt-duration').value)||45;
+    var withMeet=document.getElementById('mt-meet').checked;
+    if(!closerEmail){ window.showToast('Selecione o closer.','error'); return; }
+    if(!clientEmail){ window.showToast('Informe o e-mail do cliente.','error'); return; }
+    if(!dtLocal){ window.showToast('Defina a data e hora.','error'); return; }
+    if(!window.GOOGLE_CLIENT_ID){ window.showToast('Google Agenda não configurado. Use "Mover sem agendar" ou configure o Client ID.','error'); return; }
+    var start=new Date(dtLocal); var end=new Date(start.getTime()+dur*60000);
+    var ev={
+      summary:'Diagnóstico — '+(lead.company||lead.name||'Cliente'),
+      description:'Reunião de diagnóstico (SCALEX O.S.)\nCliente: '+(lead.company||'')+'\nContato: '+(lead.name||'')+'\nCloser: '+closerName,
+      start:{ dateTime:fmtLocal(start), timeZone:'America/Sao_Paulo' },
+      end:{ dateTime:fmtLocal(end), timeZone:'America/Sao_Paulo' },
+      attendees:[ {email:closerEmail}, {email:clientEmail} ]
+    };
+    if(withMeet){ ev.conferenceData={ createRequest:{ requestId:'scalex-'+Date.now(), conferenceSolutionKey:{ type:'hangoutsMeet' } } }; }
+    window.showToast('Criando evento no Google Agenda...','info');
+    gcalCreateEvent(ev, function(created){
+      var link=created.htmlLink||''; var meet=created.hangoutLink||'';
+      histPush('leads',id,{ phase:'Reunião de Diagnóstico', meetingAt:dtLocal, meetingCloserEmail:closerEmail, meetingCloserName:closerName, meetingClientEmail:clientEmail, meetingEventId:created.id||'', meetingEventLink:link, meetingMeetLink:meet },'agendou reunião',{ closer:closerName, at:dtLocal, link:link });
+      window.appActions.closeMeetingModal();
+      window.showToast('Reunião agendada e convites enviados!','success');
+    }, function(err){
+      if(err==='config'){ window.showToast('Google Agenda não configurado.','error'); }
+      else if(err==='denied'){ window.showToast('Permissão do Google negada. Tente novamente.','error'); }
+      else { window.showToast('Erro ao criar evento: '+err,'error'); console.error('gcal',err); }
+    });
+  };
+
+  console.log('SCALEX • Firebase conectado (projeto '+(window.firebaseConfig&&window.firebaseConfig.projectId)+').');
+})();
 
 </script>
 </body>
