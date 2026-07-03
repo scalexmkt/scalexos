@@ -1963,12 +1963,12 @@ function getLeadsBaseHTML(){
   html += '</div>';
   // Filtros simples
   html += '<div class="bg-[#111] border border-[#222] rounded-2xl p-4 flex flex-wrap gap-3 items-end">';
-  html += '<div class="flex-1 min-w-[200px]"><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Buscar</label><input type="text" id="lb-search" oninput="window.appActions.renderLeadsBase()" placeholder="Nome, empresa, telefone..." class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-orange-500" /></div>';
+  html += '<div class="flex-1 min-w-[200px]"><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Buscar</label><input type="text" id="lb-search" oninput="window.appActions.renderLeadsBase()" placeholder="Nome, empresa, segmento, whatsapp, e-mail..." class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-orange-500" /></div>';
   html += '<div><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Status</label><select id="lb-fstatus" onchange="window.appActions.renderLeadsBase()" class="bg-[#0a0a0a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white outline-none"><option value="">Todos</option><option value="Novo">Novo</option><option value="Em contato">Em contato</option><option value="Qualificado">Qualificado</option><option value="Descartado">Descartado</option></select></div>';
   html += '</div>';
   // Tabela
   html += '<div class="bg-[#111] border border-[#222] rounded-2xl overflow-hidden"><div class="overflow-x-auto"><table style="width:100%;border-collapse:collapse;font-size:13px" id="lb-table"></table></div>';
-  html += '<div id="lb-empty" class="hidden p-12 text-center"><i data-lucide="database" class="w-12 h-12 text-gray-600 mx-auto mb-3"></i><h3 class="text-lg font-bold text-white mb-1">Base vazia</h3><p class="text-sm text-gray-400 mb-4">Importe um arquivo CSV com seus leads para comecar.<br>Colunas aceitas: Nome, Empresa, Telefone, Email, Origem.</p><button onclick="window.appActions.triggerLeadsCSV()" class="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-lg font-bold inline-flex items-center gap-2"><i data-lucide="upload" class="w-4 h-4"></i> Importar CSV</button></div>';
+  html += '<div id="lb-empty" class="hidden p-12 text-center"><i data-lucide="database" class="w-12 h-12 text-gray-600 mx-auto mb-3"></i><h3 class="text-lg font-bold text-white mb-1">Base vazia</h3><p class="text-sm text-gray-400 mb-4">Importe um arquivo CSV/Excel com seus leads para começar.<br>Colunas aceitas: Nome do Contato, Empresa, Faturamento Estimado, Segmento, Instagram, LinkedIn, WhatsApp, E-mail, Origem.</p><button onclick="window.appActions.triggerLeadsCSV()" class="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-lg font-bold inline-flex items-center gap-2"><i data-lucide="upload" class="w-4 h-4"></i> Importar CSV</button></div>';
   html += '</div></div>';
   return html;
 }
@@ -1976,21 +1976,31 @@ function getLeadsBaseHTML(){
 window.appActions = window.appActions || {};
 window.appActions.triggerLeadsCSV = function(){ var inp=document.getElementById('leadsbase-csv'); if(inp) inp.click(); };
 window.appActions.downloadLeadsTemplate = function(){
-  var csv = 'Nome,Empresa,Telefone,Email,Origem\nJoao Silva,Empresa Exemplo Ltda,11999990000,joao@exemplo.com,Lista Fria\nMaria Souza,Outra Empresa ME,11988887777,maria@outra.com,Indicacao\n';
+  var csv = 'Nome do Contato,Empresa,Faturamento Estimado,Segmento,Instagram,LinkedIn,WhatsApp,Email,Origem\n'
+    + 'Joao Silva,Empresa Exemplo Ltda,50000,Varejo,@empresaexemplo,https://linkedin.com/in/joaosilva,11999990000,joao@exemplo.com,Lista Fria\n'
+    + 'Maria Souza,Outra Empresa ME,120000,Servicos,@outraempresa,https://linkedin.com/in/mariasouza,11988887777,maria@outra.com,Indicacao\n';
   var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'modelo_base_leads.csv'; document.body.appendChild(a); a.click(); a.remove();
 };
 function lbColIdx(headers, names){ for(var i=0;i<names.length;i++){ var idx=headers.indexOf(names[i]); if(idx>=0) return idx; } return -1; }
 function lbBuildLeads(headers, dataRows){
   headers = headers.map(function(h){ return String(h==null?'':h).trim().toLowerCase(); });
-  var iNome=lbColIdx(headers,['nome','name','contato']), iEmp=lbColIdx(headers,['empresa','company','negocio']), iTel=lbColIdx(headers,['telefone','phone','celular','whatsapp','fone']), iMail=lbColIdx(headers,['email','e-mail']), iOrig=lbColIdx(headers,['origem','source','tag','canal']);
+  var iNome=lbColIdx(headers,['nome do contato','nome','name','contato']);
+  var iEmp=lbColIdx(headers,['empresa','company','negocio']);
+  var iFat=lbColIdx(headers,['faturamento estimado','faturamento','faturamento estimado (r$)','revenue','receita']);
+  var iSeg=lbColIdx(headers,['segmento','segment','nicho','ramo']);
+  var iInsta=lbColIdx(headers,['instagram','insta','ig']);
+  var iLink=lbColIdx(headers,['linkedin','linked in']);
+  var iWhats=lbColIdx(headers,['whatsapp','telefone','celular','phone','fone','zap','whats']);
+  var iMail=lbColIdx(headers,['email','e-mail','e mail']);
+  var iOrig=lbColIdx(headers,['origem','onde foi encontrado','origem (onde foi encontrado)','source','tag','canal']);
   var out=[];
   for(var r=0;r<dataRows.length;r++){
     var cells=dataRows[r]||[];
     var get=function(i){ return i>=0 && cells[i]!=null ? String(cells[i]).trim() : ''; };
     var nome=get(iNome), emp=get(iEmp);
-    if(!nome && !emp && !get(iTel)) continue;
-    out.push({ id:'LB'+Date.now()+'_'+r+'_'+Math.floor(Math.random()*100000), nome:nome, empresa:emp, telefone:get(iTel), email:get(iMail), origem:get(iOrig)||'Importado', status:'Novo' });
+    if(!nome && !emp && !get(iWhats)) continue;
+    out.push({ id:'LB'+Date.now()+'_'+r+'_'+Math.floor(Math.random()*100000), nome:nome, empresa:emp, faturamento:get(iFat), segmento:get(iSeg), instagram:get(iInsta), linkedin:get(iLink), whatsapp:get(iWhats), email:get(iMail), origem:get(iOrig)||'Importado', status:'Novo' });
   }
   return out;
 }
@@ -2005,8 +2015,13 @@ function lbParseCSV(text){
 }
 window.appActions.downloadLeadsTemplateXlsx = function(){
   if(!window.XLSX){ alert('Biblioteca de Excel ainda carregando. Tente novamente em instantes.'); return; }
-  var data=[['Nome','Empresa','Telefone','Email','Origem'],['Joao Silva','Acme Servicos Ltda','11999990000','joao@acme.com','Lista Fria'],['Maria Souza','Beta Tech ME','11988887777','maria@beta.com','Indicacao'],['Carlos Lima','Gama Corp','11977776666','carlos@gama.com','Outbound']];
-  var ws=XLSX.utils.aoa_to_sheet(data); ws['!cols']=[{wch:22},{wch:28},{wch:18},{wch:28},{wch:18}];
+  var data=[
+    ['Nome do Contato','Empresa','Faturamento Estimado','Segmento','Instagram','LinkedIn','WhatsApp','Email','Origem'],
+    ['Joao Silva','Acme Servicos Ltda','50000','Varejo','@acmeservicos','https://linkedin.com/in/joaosilva','11999990000','joao@acme.com','Lista Fria'],
+    ['Maria Souza','Beta Tech ME','120000','Tecnologia','@betatech','https://linkedin.com/in/mariasouza','11988887777','maria@beta.com','Indicacao'],
+    ['Carlos Lima','Gama Corp','300000','Industria','@gamacorp','https://linkedin.com/company/gamacorp','11977776666','carlos@gama.com','Outbound']
+  ];
+  var ws=XLSX.utils.aoa_to_sheet(data); ws['!cols']=[{wch:22},{wch:26},{wch:18},{wch:16},{wch:20},{wch:34},{wch:16},{wch:26},{wch:18}];
   var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Base de Leads'); XLSX.writeFile(wb,'modelo_base_leads.xlsx');
 };
 window.appActions.importLeadsCSV = function(input){
@@ -2028,7 +2043,7 @@ window.appActions.importLeadsCSV = function(input){
         var txt = (typeof e.target.result==='string') ? e.target.result : new TextDecoder('utf-8').decode(e.target.result);
         novos = lbParseCSV(txt);
       }
-      if(novos.length===0){ alert('Nenhum lead valido encontrado. Verifique as colunas Nome/Empresa/Telefone.'); return; }
+      if(novos.length===0){ alert('Nenhum lead válido encontrado. Verifique as colunas (Nome do Contato, Empresa, WhatsApp...).'); return; }
       if(!window.state.leadsBase) lbLoad();
       window.state.leadsBase = window.state.leadsBase.concat(novos);
       lbSave(); input.value='';
@@ -2053,12 +2068,16 @@ window.appActions.cycleLeadStatus = function(id){
   var l=(window.state.leadsBase||[]).find(function(x){ return x.id===id; }); if(!l) return;
   var i=ordem.indexOf(l.status||'Novo'); l.status=ordem[(i+1)%ordem.length]; lbSave(); window.appActions.renderLeadsBase();
 };
+function lbInstaUrl(v){ v=(v||'').trim(); if(!v) return ''; if(/^https?:\/\//i.test(v)) return v; return 'https://instagram.com/'+v.replace(/^@/,''); }
+function lbLinkedinUrl(v){ v=(v||'').trim(); if(!v) return ''; if(/^https?:\/\//i.test(v)) return v; if(v.indexOf('linkedin.com')>=0) return 'https://'+v; return 'https://www.linkedin.com/search/results/all/?keywords='+encodeURIComponent(v); }
+function lbWaUrl(v){ var d=(v||'').replace(/\D/g,''); if(!d) return ''; if(d.length<=11) d='55'+d; return 'https://wa.me/'+d; }
+function lbFmtFat(v){ v=(v==null?'':v).toString().trim(); if(!v) return '—'; var n=Number(v.replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',','.')); if(!isNaN(n)&&n>0) return (window.formatCurrency?window.formatCurrency(n):('R$ '+n)); return esc(v); }
 window.appActions.renderLeadsBase = function(){
   var base = window.state.leadsBase || [];
   var q=(document.getElementById('lb-search')||{}).value||''; q=q.toLowerCase();
   var fs=(document.getElementById('lb-fstatus')||{}).value||'';
   var rows = base.filter(function(l){
-    if(q && (l.nome+' '+l.empresa+' '+l.telefone+' '+(l.email||'')).toLowerCase().indexOf(q)<0) return false;
+    if(q && ((l.nome||'')+' '+(l.empresa||'')+' '+(l.whatsapp||l.telefone||'')+' '+(l.email||'')+' '+(l.segmento||'')).toLowerCase().indexOf(q)<0) return false;
     if(fs && (l.status||'Novo')!==fs) return false;
     return true;
   });
@@ -2069,13 +2088,22 @@ window.appActions.renderLeadsBase = function(){
   var stCor=function(s){ s=s||'Novo'; if(s==='Qualificado') return 'color:#10b981;background:rgba(16,185,129,.12)'; if(s==='Em contato') return 'color:#f59e0b;background:rgba(245,158,11,.12)'; if(s==='Descartado') return 'color:#ef4444;background:rgba(239,68,68,.12)'; return 'color:#3b82f6;background:rgba(59,130,246,.12)'; };
   var th='text-align:left;padding:12px 14px;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:800';
   var html='<thead><tr style="background:#0a0a0a">'+
-    '<th style="'+th+'">Nome</th><th style="'+th+'">Empresa</th><th style="'+th+'">Telefone</th><th style="'+th+'">Email</th><th style="'+th+'">Origem</th><th style="'+th+';text-align:center">Status</th><th style="'+th+';text-align:center"></th></tr></thead><tbody>';
+    '<th style="'+th+'">Contato</th><th style="'+th+'">Empresa</th><th style="'+th+'">Segmento</th><th style="'+th+'">Faturamento</th><th style="'+th+'">WhatsApp</th><th style="'+th+'">E-mail</th><th style="'+th+';text-align:center">Redes</th><th style="'+th+'">Origem</th><th style="'+th+';text-align:center">Status</th><th style="'+th+';text-align:center"></th></tr></thead><tbody>';
   rows.forEach(function(l){
+    var wa=lbWaUrl(l.whatsapp||l.telefone); var waCell = wa ? '<a href="'+wa+'" target="_blank" rel="noopener" style="color:#25D366;font-weight:700">'+esc(l.whatsapp||l.telefone)+'</a>' : '<span style="color:#555">—</span>';
+    var mailCell = l.email ? '<a href="mailto:'+esc(l.email)+'" style="color:#93c5fd">'+esc(l.email)+'</a>' : '<span style="color:#555">—</span>';
+    var ig=lbInstaUrl(l.instagram); var li=lbLinkedinUrl(l.linkedin);
+    var igBtn = ig ? '<a href="'+esc(ig)+'" target="_blank" rel="noopener" title="Instagram" style="color:#e1306c;padding:0 4px"><i data-lucide="instagram" class="w-4 h-4" style="display:inline"></i></a>' : '';
+    var liBtn = li ? '<a href="'+esc(li)+'" target="_blank" rel="noopener" title="LinkedIn" style="color:#0a66c2;padding:0 4px"><i data-lucide="linkedin" class="w-4 h-4" style="display:inline"></i></a>' : '';
+    var redes = (igBtn||liBtn) ? (igBtn+liBtn) : '<span style="color:#555">—</span>';
     html+='<tr style="border-top:1px solid #1a1a1a">'+
       '<td style="padding:11px 14px;color:#fff;font-weight:700">'+esc(l.nome)+'</td>'+
       '<td style="padding:11px 14px;color:#ccc">'+esc(l.empresa)+'</td>'+
-      '<td style="padding:11px 14px;color:#aaa">'+esc(l.telefone)+'</td>'+
-      '<td style="padding:11px 14px;color:#888">'+esc(l.email)+'</td>'+
+      '<td style="padding:11px 14px;color:#aaa">'+(l.segmento?esc(l.segmento):'<span style=\"color:#555\">—</span>')+'</td>'+
+      '<td style="padding:11px 14px;color:#10b981;font-weight:700">'+lbFmtFat(l.faturamento)+'</td>'+
+      '<td style="padding:11px 14px">'+waCell+'</td>'+
+      '<td style="padding:11px 14px">'+mailCell+'</td>'+
+      '<td style="padding:11px 14px;text-align:center;white-space:nowrap">'+redes+'</td>'+
       '<td style="padding:11px 14px;color:#aaa">'+esc(l.origem)+'</td>'+
       '<td style="padding:11px 14px;text-align:center"><button onclick="window.appActions.cycleLeadStatus(\''+l.id+'\')" title="Clique para mudar" style="font-size:10px;font-weight:800;text-transform:uppercase;padding:4px 10px;border-radius:6px;cursor:pointer;'+stCor(l.status)+'">'+esc(l.status||'Novo')+'</button></td>'+
       '<td style="padding:11px 14px;text-align:center"><button onclick="window.appActions.deleteLeadBase(\''+l.id+'\')" style="color:#666;padding:4px"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>';
