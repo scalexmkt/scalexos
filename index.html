@@ -252,7 +252,7 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
               <div><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Nome</label><input id="nu-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-white text-sm outline-none focus:border-orange-500" /></div>
               <div><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">E-mail</label><input id="nu-email" type="email" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-white text-sm outline-none focus:border-orange-500" /></div>
               <div><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Senha</label><input id="nu-password" type="text" placeholder="mín. 6 caracteres" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-white text-sm outline-none focus:border-orange-500" /></div>
-              <div><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Cargo</label><select id="nu-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-white text-sm outline-none"><option value="Administrador">Administrador</option><option value="Closer">Closer</option><option value="SDR">SDR</option><option value="Operacional">Operacional</option></select></div>
+              <div><label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Cargo</label><select id="nu-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-white text-sm outline-none"><option value="Administrador">Administrador</option><option value="Closer">Closer</option><option value="SDR">SDR</option><option value="BDR">BDR</option><option value="Operacional">Operacional</option></select></div>
               <button onclick="window.appActions.addUser()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition"><i data-lucide="user-plus" class="w-4 h-4"></i> Adicionar</button>
             </div>
           </div>
@@ -322,7 +322,7 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
     <div id="modal-meeting" class="fixed inset-0 z-[95] bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" onclick="if(event.target===this)window.appActions.closeMeetingModal()">
       <div class="bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
         <div class="p-5 border-b border-[#222] flex items-center justify-between">
-          <h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="calendar-plus" class="w-5 h-5 text-orange-500"></i> Agendar Reunião de Diagnóstico</h3>
+          <h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="calendar-plus" class="w-5 h-5 text-orange-500"></i> Agendar Reunião</h3>
           <button onclick="window.appActions.closeMeetingModal()" class="text-gray-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <div class="p-6 space-y-4">
@@ -352,6 +352,37 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
             <button onclick="window.appActions.confirmMeeting()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2.5 rounded-lg font-bold transition flex items-center justify-center gap-2"><i data-lucide="calendar-check" class="w-4 h-4"></i> Agendar no Google e mover</button>
             <button onclick="window.appActions.meetingMoveOnly()" class="w-full bg-[#1a1a1a] border border-[#333] text-gray-300 py-2.5 rounded-lg font-bold hover:border-orange-500 transition">Mover sem agendar</button>
             <button onclick="window.appActions.closeMeetingModal()" class="w-full text-gray-500 hover:text-white py-2 rounded-lg font-bold transition">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL FINALIZAR LEAD (estados finais / perda) -->
+    <div id="modal-finalize" class="fixed inset-0 z-[95] bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" onclick="if(event.target===this)window.appActions.closeFinalizeModal()">
+      <div class="bg-[#141414] border border-[#333] rounded-2xl w-full max-w-sm shadow-2xl">
+        <div class="p-5 border-b border-[#222] flex items-center justify-between">
+          <h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="flag" class="w-5 h-5 text-red-500"></i> Finalizar Lead</h3>
+          <button onclick="window.appActions.closeFinalizeModal()" class="text-gray-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="fz-lead-id" />
+          <div class="text-xs text-gray-400">Empresa: <span id="fz-company" class="text-white font-bold">—</span></div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Estado final <span class="text-red-500">*</span></label>
+            <select id="fz-state" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-red-500"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Motivo</label>
+            <select id="fz-reason" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-red-500"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Observação</label>
+            <textarea id="fz-notes" rows="2" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white outline-none focus:border-red-500 resize-none" placeholder="Opcional"></textarea>
+          </div>
+          <p class="text-[11px] text-gray-500">O lead não é excluído — ele sai do funil ativo e fica em "Finalizados", podendo ser reaberto depois.</p>
+          <div class="flex gap-2">
+            <button onclick="window.appActions.closeFinalizeModal()" class="px-4 py-2.5 rounded-lg text-sm font-bold text-gray-400 bg-[#1a1a1a] border border-[#333] hover:text-white transition">Cancelar</button>
+            <button onclick="window.appActions.confirmFinalize()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-bold transition">Finalizar lead</button>
           </div>
         </div>
       </div>
@@ -440,6 +471,15 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
             
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
                 <input type="hidden" id="lead-id" />
+                <div id="lead-ai-wrap" class="md:col-span-2 hidden">
+                    <div class="bg-gradient-to-br from-orange-950/30 to-[#0a0a0a] border border-orange-900/40 rounded-xl p-3 flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-orange-600/20 border border-orange-800/50 flex items-center justify-center text-orange-400 shrink-0"><i data-lucide="sparkles" class="w-4 h-4"></i></div>
+                        <div class="min-w-0">
+                            <div class="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-0.5 flex items-center gap-2">Assistente <span id="lead-ai-prio" class="text-gray-400 font-bold"></span></div>
+                            <div id="lead-ai-next" class="text-xs text-gray-200 leading-snug"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Nome da Empresa / Negócio <span class="text-orange-500">*</span></label>
                     <select id="lead-company" onchange="window.appActions.leadCompanyChange()" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-orange-500 transition-all outline-none"><option value="">Selecione a empresa...</option></select>
@@ -468,6 +508,32 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                     <div class="relative">
                         <select id="lead-tag" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-orange-500 outline-none appearance-none cursor-pointer font-bold"></select>
                         <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"></i>
+                    </div>
+                </div>
+                <div class="md:col-span-2 pt-2 border-t border-[#222]">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> Enriquecimento & Qualificação</label>
+                        <span id="lead-score-badge" class="text-[10px] font-black px-2 py-1 rounded"></span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Site</label><input id="lead-site" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-sm text-white outline-none focus:border-orange-500" placeholder="site.com" /></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Cidade</label><input id="lead-cidade" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-sm text-white outline-none focus:border-orange-500" /></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Estado</label><input id="lead-estado" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-sm text-white outline-none focus:border-orange-500" placeholder="SP" /></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Segmento</label><input id="lead-segmento" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-sm text-white outline-none focus:border-orange-500" /></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Cargo do contato</label><input id="lead-cargo" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-sm text-white outline-none focus:border-orange-500" /></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">LinkedIn</label><input id="lead-linkedin" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-sm text-white outline-none focus:border-orange-500" /></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Nº funcionários</label><input id="lead-funcionarios" type="number" oninput="window.appActions.refreshLeadScore&&window.appActions.refreshLeadScore()" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-sm text-white outline-none focus:border-orange-500" /></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Receita estimada</label><input id="lead-receita" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-sm text-white outline-none focus:border-orange-500" placeholder="R$/ano" /></div>
+                    </div>
+                    <div class="flex flex-wrap gap-x-4 gap-y-2 mt-3">
+                        <label class="flex items-center gap-1.5 text-xs text-gray-300 cursor-pointer"><input type="checkbox" id="lead-crm" onchange="window.appActions.refreshLeadScore&&window.appActions.refreshLeadScore()" class="accent-orange-500" /> Possui CRM</label>
+                        <label class="flex items-center gap-1.5 text-xs text-gray-300 cursor-pointer"><input type="checkbox" id="lead-metaads" onchange="window.appActions.refreshLeadScore&&window.appActions.refreshLeadScore()" class="accent-orange-500" /> Meta Ads</label>
+                        <label class="flex items-center gap-1.5 text-xs text-gray-300 cursor-pointer"><input type="checkbox" id="lead-googleads" onchange="window.appActions.refreshLeadScore&&window.appActions.refreshLeadScore()" class="accent-orange-500" /> Google Ads</label>
+                        <label class="flex items-center gap-1.5 text-xs text-gray-300 cursor-pointer"><input type="checkbox" id="lead-mktinterno" onchange="window.appActions.refreshLeadScore&&window.appActions.refreshLeadScore()" class="accent-orange-500" /> Marketing interno</label>
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase">Tags</label>
+                        <div id="lead-tags-box" class="flex flex-wrap gap-1.5"></div>
                     </div>
                 </div>
                 <div class="md:col-span-2 pt-2 border-t border-[#222]">
@@ -727,7 +793,8 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                         <select id="team-system-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-orange-500 outline-none appearance-none cursor-pointer font-bold">
                             <option value="Administrador">👑 Administrador (Acesso Total)</option>
                             <option value="Closer">🎯 Closer (Apenas CRM)</option>
-                            <option value="SDR">📞 SDR (Apenas CRM)</option>
+                            <option value="SDR">📞 SDR (CRM + Base de Leads)</option>
+                            <option value="BDR">🔎 BDR (CRM + Base de Leads)</option>
                         </select>
                         <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"></i>
                     </div>
@@ -917,13 +984,15 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
         // NAVEGAÇÃO E RBAC
         function renderNav() {
             let tabs = [
+                { id: 'meudia', icon: 'sun', label: 'Meu Dia', roles: ['Administrador', 'Closer', 'SDR', 'BDR'] },
                 { id: 'dashboard', icon: 'layout-dashboard', label: 'Painel DFC (Caixa)', roles: ['Administrador'] },
                 { id: 'clients', icon: 'folder-kanban', label: 'Projetos (I.O.S)', roles: ['Administrador'] },
-                { id: 'crm', icon: 'crosshair', label: 'CRM de Vendas', roles: ['Administrador', 'Closer', 'SDR'] },
+                { id: 'crm', icon: 'crosshair', label: 'CRM de Vendas', roles: ['Administrador', 'Closer', 'SDR', 'BDR'] },
+                { id: 'gestor', icon: 'bar-chart-3', label: 'Painel Comercial', roles: ['Administrador'] },
                 { id: 'dre', icon: 'trending-up', label: 'DRE & Forecast', roles: ['Administrador'] },
                 { id: 'contracts', icon: 'file-signature', label: 'Gestão de Contratos', roles: ['Administrador'] },
-                { id: 'leadsbase', icon: 'database', label: 'Base de Leads', roles: ['Administrador', 'SDR', 'Closer'] },
-                { id: 'companiesrep', icon: 'building-2', label: 'Empresas & Contatos', roles: ['Administrador', 'Closer', 'SDR'] },
+                { id: 'leadsbase', icon: 'database', label: 'Base de Leads', roles: ['Administrador', 'SDR', 'Closer', 'BDR'] },
+                { id: 'companiesrep', icon: 'building-2', label: 'Empresas & Contatos', roles: ['Administrador', 'Closer', 'SDR', 'BDR'] },
                 { id: 'closedprojects', icon: 'archive', label: 'Projetos Encerrados', roles: ['Administrador'] }
             ];
 
@@ -1382,10 +1451,16 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
         }
 
         function getCrmHTML() {
-            const cols = ["Tratativa Inicial", "Qualificação (SDR)", "Reunião de Diagnóstico", "Proposta Enviada", "Negociação", "Fechado (I.O.S)"];
+            const cols = ["Empresa Identificada","Lead Enriquecido","Primeiro Contato","Em Cadência","Respondeu","Qualificado","Reunião Agendada","Reunião Realizada","Proposta Enviada","Negociação","Fechado"];
+            const finalizadosCount = window.state.leads.filter(l => l.closedState).length;
+            const crmView = window.__sxCrmView || 'ativos';
+            const crmToggle = `<div class="flex bg-[#111] border border-[#222] rounded-xl p-1"><button onclick="window.appActions.setCrmView('ativos')" class="px-4 py-2 rounded-lg text-xs font-bold transition ${crmView==='ativos'?'bg-orange-600 text-white':'text-gray-400 hover:text-white'}">Funil Ativo</button><button onclick="window.appActions.setCrmView('finalizados')" class="px-4 py-2 rounded-lg text-xs font-bold transition ${crmView==='finalizados'?'bg-orange-600 text-white':'text-gray-400 hover:text-white'}">Finalizados (${finalizadosCount})</button></div>`;
+            if (crmView === 'finalizados') {
+                return `<div class="animate-fade-in h-full flex flex-col overflow-auto"><div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 flex-shrink-0"><div><h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">Leads Finalizados</h2><p class="text-sm text-gray-400 mt-1">Leads encerrados por motivo — nunca são excluídos. Reabra quando quiser.</p></div>${crmToggle}</div><div class="flex-1 overflow-auto">${window.sxFinalizadosHTML?window.sxFinalizadosHTML():''}</div></div>`;
+            }
             let boardHTML = `<div id="crm-board-scroll" class="flex gap-5 overflow-x-auto pb-4 pt-2 items-start h-full crm-board-scroll">`;
             cols.forEach((col, index) => {
-                const colLeads = window.state.leads.filter(l => l.phase === col);
+                const colLeads = window.state.leads.filter(l => l.phase === col && !l.closedState);
                 const colSum = colLeads.reduce((a, b) => a + Number(b.value), 0);
                 const isWinCol = index === cols.length - 1;
                 boardHTML += `
@@ -1418,6 +1493,16 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                     const dueBtn = `<button onclick="event.stopPropagation();window.appActions.openDueDateModal('${lead.id}')" class="text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded-md ${overdue ? 'text-red-300 bg-red-500/15 border border-red-700/50' : 'text-gray-400 bg-[#0a0a0a] border border-[#333] hover:text-orange-400'} transition-colors" title="Data de atendimento/vencimento"><i data-lucide="calendar-clock" class="w-3 h-3"></i> ${dueLabel}</button>`;
                     const overdueBadge = overdue ? `<span class="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-red-600 text-white flex items-center gap-1"><i data-lucide="alert-triangle" class="w-2.5 h-2.5"></i> Atrasado</span>` : '';
                     const cardCls = overdue ? 'bg-red-950/20 border-red-600/70 hover:border-red-500' : (isWinCol ? 'bg-[#1a1a1a] border-emerald-900/50 hover:border-emerald-500/80' : 'bg-[#1a1a1a] border-[#333] hover:border-orange-500/50');
+                    const _score = window.sxLeadScore ? window.sxLeadScore(lead) : 0;
+                    const _sc = window.sxScoreClass ? window.sxScoreClass(_score) : '';
+                    const _scColor = window.sxScoreColor ? window.sxScoreColor(_sc) : '#666';
+                    const scoreBadge = `<span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded flex items-center gap-0.5" style="color:${_scColor};background:${_scColor}1f;border:1px solid ${_scColor}55" title="Lead score (${_score})"><i data-lucide="zap" class="w-2.5 h-2.5"></i>${_sc}</span>`;
+                    const finalizeBtn = `<button onclick="event.stopPropagation();window.appActions.openFinalizeModal('${lead.id}')" class="text-gray-600 hover:text-red-500 p-1 -mt-1 transition-colors" title="Finalizar (perdido, sem interesse, timing...)"><i data-lucide="flag" class="w-3.5 h-3.5"></i></button>`;
+                    const _ctasks = (window.state.tasks||[]).filter(t => t.leadId===lead.id);
+                    const _cdone = _ctasks.filter(t => t.status==='feito').length;
+                    let cadenceLine = '';
+                    if(lead.cadenceStarted && _ctasks.length){ cadenceLine = `<div class="mt-2 flex items-center gap-1 text-[10px] text-gray-500"><i data-lucide="list-checks" class="w-3 h-3"></i> Cadência ${_cdone}/${_ctasks.length}</div>`; }
+                    else if(col==='Em Cadência'){ cadenceLine = `<button onclick="event.stopPropagation();window.appActions.iniciarCadencia('${lead.id}')" class="mt-2 text-[10px] font-bold text-orange-400 hover:text-orange-300 flex items-center gap-1"><i data-lucide="play" class="w-3 h-3"></i> Iniciar cadência</button>`; }
                     let stageDots = '';
                     cols.forEach((_, di) => { stageDots += `<span class="h-1 flex-1 rounded-full ${di <= index ? (isWinCol ? 'bg-emerald-500' : 'bg-orange-500') : 'bg-[#2a2a2a]'}"></span>`; });
                     const stageBar = `<div class="flex items-center gap-2 mt-3" onclick="event.stopPropagation()">
@@ -1427,9 +1512,10 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                     </div>`;
                     boardHTML += `
                         <div draggable="true" ondragstart="window.appActions.drag(event, '${lead.id}')" ondragend="window.appActions.dragEnd(event)" onclick="window.appActions.openLeadModal('${lead.id}')" class="border ${cardCls} p-4 rounded-xl cursor-pointer transition-all hover:shadow-lg relative">
-                            <div class="flex justify-between items-start mb-2 gap-1"><div class="flex items-center gap-1 flex-wrap"><span class="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1 ${tagClass}"><i data-lucide="${tagIcon}" class="w-2.5 h-2.5"></i> ${window.escapeHTML(lead.tag)}</span>${overdueBadge}</div>${delLeadBtn}</div>
+                            <div class="flex justify-between items-start mb-2 gap-1"><div class="flex items-center gap-1 flex-wrap"><span class="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1 ${tagClass}"><i data-lucide="${tagIcon}" class="w-2.5 h-2.5"></i> ${window.escapeHTML(lead.tag)}</span>${scoreBadge}${overdueBadge}</div><div class="flex items-center shrink-0">${finalizeBtn}${delLeadBtn}</div></div>
                             <h4 class="text-sm font-bold text-white mb-1 leading-tight">${window.escapeHTML(lead.company)}</h4>
                             ${lead.name !== lead.company ? `<p class="text-[10px] text-gray-500 mb-2 font-medium flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${window.escapeHTML(lead.name)}</p>` : ''}
+                            ${cadenceLine}
                             <div class="flex justify-between items-center mt-3 pt-3 border-t border-[#2a2a2a] gap-2"><span class="text-xs font-black ${isWinCol ? 'text-white' : 'text-emerald-400'} shrink-0">${window.formatCurrency(lead.value)}</span><div class="flex items-center gap-1.5 flex-wrap justify-end">${dueBtn}${propBtn}<a href="${waLink}" target="_blank" onclick="event.stopPropagation()" class="w-7 h-7 bg-[#0a0a0a] hover:bg-[#25D366]/20 transition-colors border border-[#333] hover:border-[#25D366]/50 rounded-full flex items-center justify-center text-gray-500 hover:text-[#25D366] shrink-0"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i></a></div></div>
                             ${stageBar}
                         </div>`;
@@ -1439,7 +1525,7 @@ table.fin-dre .first-col { background:#0a0a0a; position:sticky; left:0; z-index:
                 boardHTML += `</div>`;
             });
             boardHTML += `</div>`;
-            return `<div class="animate-fade-in h-full flex flex-col overflow-hidden"><div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 flex-shrink-0"><div><h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">Pipeline Operacional</h2><p class="text-sm text-gray-400 mt-1">Os leads são rastreados pelas fontes do Dashboard.</p></div><div class="flex gap-3 w-full md:w-auto items-center"><div class="flex gap-1.5 mr-1"><button onclick="window.appActions.scrollCrm(-1)" class="w-11 h-11 flex items-center justify-center bg-[#1a1a1a] border border-[#333] text-gray-300 rounded-xl hover:bg-[#222] hover:text-orange-500 hover:border-orange-900/50 transition-all shadow-lg" title="Rolar para a esquerda"><i data-lucide="chevron-left" class="w-5 h-5"></i></button><button onclick="window.appActions.scrollCrm(1)" class="w-11 h-11 flex items-center justify-center bg-[#1a1a1a] border border-[#333] text-gray-300 rounded-xl hover:bg-[#222] hover:text-orange-500 hover:border-orange-900/50 transition-all shadow-lg" title="Rolar para a direita"><i data-lucide="chevron-right" class="w-5 h-5"></i></button></div><button onclick="window.appActions.openProductCatalog()" class="w-full md:w-auto bg-[#1a1a1a] border border-[#333] text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#222] transition-transform hover:-translate-y-0.5 shadow-lg"><i data-lucide="package" class="w-4 h-4"></i> Catálogo</button><button onclick="window.appActions.openLeadModal()" class="w-full md:w-auto bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-orange-700 transition-transform hover:-translate-y-0.5 shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i> Novo Negócio</button></div></div><div class="flex-1 overflow-hidden">${boardHTML}</div></div>`;
+            return `<div class="animate-fade-in h-full flex flex-col overflow-hidden"><div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 flex-shrink-0"><div><h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">Pipeline Operacional</h2><p class="text-sm text-gray-400 mt-1">Prospecção Outbound B2B — 11 etapas.</p></div><div class="flex gap-3 w-full md:w-auto items-center flex-wrap">${crmToggle}<div class="flex gap-1.5 mr-1"><button onclick="window.appActions.scrollCrm(-1)" class="w-11 h-11 flex items-center justify-center bg-[#1a1a1a] border border-[#333] text-gray-300 rounded-xl hover:bg-[#222] hover:text-orange-500 hover:border-orange-900/50 transition-all shadow-lg" title="Rolar para a esquerda"><i data-lucide="chevron-left" class="w-5 h-5"></i></button><button onclick="window.appActions.scrollCrm(1)" class="w-11 h-11 flex items-center justify-center bg-[#1a1a1a] border border-[#333] text-gray-300 rounded-xl hover:bg-[#222] hover:text-orange-500 hover:border-orange-900/50 transition-all shadow-lg" title="Rolar para a direita"><i data-lucide="chevron-right" class="w-5 h-5"></i></button></div><button onclick="window.appActions.openProductCatalog()" class="w-full md:w-auto bg-[#1a1a1a] border border-[#333] text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#222] transition-transform hover:-translate-y-0.5 shadow-lg"><i data-lucide="package" class="w-4 h-4"></i> Catálogo</button><button onclick="window.appActions.openLeadModal()" class="w-full md:w-auto bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-orange-700 transition-transform hover:-translate-y-0.5 shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i> Novo Negócio</button></div></div><div class="flex-1 overflow-hidden">${boardHTML}</div></div>`;
         }
 
         function getTeamHTML() {
@@ -2088,7 +2174,7 @@ window.appActions.renderLeadsBase = function(){
   var stCor=function(s){ s=s||'Novo'; if(s==='Qualificado') return 'color:#10b981;background:rgba(16,185,129,.12)'; if(s==='Em contato') return 'color:#f59e0b;background:rgba(245,158,11,.12)'; if(s==='Descartado') return 'color:#ef4444;background:rgba(239,68,68,.12)'; return 'color:#3b82f6;background:rgba(59,130,246,.12)'; };
   var th='text-align:left;padding:12px 14px;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:800';
   var html='<thead><tr style="background:#0a0a0a">'+
-    '<th style="'+th+'">Contato</th><th style="'+th+'">Empresa</th><th style="'+th+'">Segmento</th><th style="'+th+'">Faturamento</th><th style="'+th+'">WhatsApp</th><th style="'+th+'">E-mail</th><th style="'+th+';text-align:center">Redes</th><th style="'+th+'">Origem</th><th style="'+th+';text-align:center">Status</th><th style="'+th+';text-align:center"></th></tr></thead><tbody>';
+    '<th style="'+th+'">Contato</th><th style="'+th+'">Empresa</th><th style="'+th+'">Segmento</th><th style="'+th+'">Faturamento</th><th style="'+th+'">WhatsApp</th><th style="'+th+'">E-mail</th><th style="'+th+';text-align:center">Redes</th><th style="'+th+'">Origem</th><th style="'+th+';text-align:center">Status</th><th style="'+th+';text-align:center">CRM</th><th style="'+th+';text-align:center"></th></tr></thead><tbody>';
   rows.forEach(function(l){
     var wa=lbWaUrl(l.whatsapp||l.telefone); var waCell = wa ? '<a href="'+wa+'" target="_blank" rel="noopener" style="color:#25D366;font-weight:700">'+esc(l.whatsapp||l.telefone)+'</a>' : '<span style="color:#555">—</span>';
     var mailCell = l.email ? '<a href="mailto:'+esc(l.email)+'" style="color:#93c5fd">'+esc(l.email)+'</a>' : '<span style="color:#555">—</span>';
@@ -2096,6 +2182,9 @@ window.appActions.renderLeadsBase = function(){
     var igBtn = ig ? '<a href="'+esc(ig)+'" target="_blank" rel="noopener" title="Instagram" style="color:#e1306c;padding:0 4px"><i data-lucide="instagram" class="w-4 h-4" style="display:inline"></i></a>' : '';
     var liBtn = li ? '<a href="'+esc(li)+'" target="_blank" rel="noopener" title="LinkedIn" style="color:#0a66c2;padding:0 4px"><i data-lucide="linkedin" class="w-4 h-4" style="display:inline"></i></a>' : '';
     var redes = (igBtn||liBtn) ? (igBtn+liBtn) : '<span style="color:#555">—</span>';
+    var crmBtn = l.sentToCRM
+      ? '<span title="Enviado por '+esc(l.sentByName||'')+'" style="font-size:10px;font-weight:800;color:#10b981;padding:4px 8px;white-space:nowrap"><i data-lucide="check" class="w-3 h-3" style="display:inline;vertical-align:-1px"></i> No CRM</span>'
+      : '<button onclick="window.appActions.sendBaseLeadToCRM(\''+l.id+'\')" title="Validar e enviar para o CRM" style="font-size:10px;font-weight:800;text-transform:uppercase;padding:6px 10px;border-radius:6px;cursor:pointer;color:#fff;background:#ea580c;border:none;white-space:nowrap"><i data-lucide="send" class="w-3 h-3" style="display:inline;vertical-align:-1px"></i> CRM</button>';
     html+='<tr style="border-top:1px solid #1a1a1a">'+
       '<td style="padding:11px 14px;color:#fff;font-weight:700">'+esc(l.nome)+'</td>'+
       '<td style="padding:11px 14px;color:#ccc">'+esc(l.empresa)+'</td>'+
@@ -2106,7 +2195,8 @@ window.appActions.renderLeadsBase = function(){
       '<td style="padding:11px 14px;text-align:center;white-space:nowrap">'+redes+'</td>'+
       '<td style="padding:11px 14px;color:#aaa">'+esc(l.origem)+'</td>'+
       '<td style="padding:11px 14px;text-align:center"><button onclick="window.appActions.cycleLeadStatus(\''+l.id+'\')" title="Clique para mudar" style="font-size:10px;font-weight:800;text-transform:uppercase;padding:4px 10px;border-radius:6px;cursor:pointer;'+stCor(l.status)+'">'+esc(l.status||'Novo')+'</button></td>'+
-      '<td style="padding:11px 14px;text-align:center"><button onclick="window.appActions.deleteLeadBase(\''+l.id+'\')" style="color:#666;padding:4px"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>';
+      '<td style="padding:11px 14px;text-align:center">'+crmBtn+'</td>'+
+      '<td style="padding:11px 14px;text-align:center"><button onclick="window.appActions.deleteLeadBase(\''+l.id+'\')" style="color:#666;padding:4px" title="Remover da base"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>';
   });
   html+='</tbody>'; t.innerHTML=html;
   if(window.lucide) lucide.createIcons();
@@ -2216,6 +2306,8 @@ function getContractsHTML(){
             else if (window.state.activeTab === 'leadsbase') { content.innerHTML = getLeadsBaseHTML(); setTimeout(initLeadsBase, 50); }
             else if (window.state.activeTab === 'companiesrep') { content.innerHTML = getCompaniesHTML(); }
             else if (window.state.activeTab === 'closedprojects') { content.innerHTML = getClosedProjectsHTML(); }
+            else if (window.state.activeTab === 'meudia') { content.innerHTML = (window.getMeuDiaHTML ? window.getMeuDiaHTML() : ''); }
+            else if (window.state.activeTab === 'gestor') { content.innerHTML = (window.getGestorHTML ? window.getGestorHTML() : ''); }
             if(window.lucide) { window.lucide.createIcons(); }
         }
 
@@ -2506,7 +2598,9 @@ function finInit(){
 /* ===== Propostas, Funil, Projetos Encerrados)            ===== */
 /* ============================================================ */
 var CO_KEY = 'scalex_companies_v1', PROD_KEY = 'scalex_products_v1';
-var SX_CRM_STAGES = ["Tratativa Inicial","Qualificação (SDR)","Reunião de Diagnóstico","Proposta Enviada","Negociação","Fechado (I.O.S)"];
+var SX_CRM_STAGES = ["Empresa Identificada","Lead Enriquecido","Primeiro Contato","Em Cadência","Respondeu","Qualificado","Reunião Agendada","Reunião Realizada","Proposta Enviada","Negociação","Fechado"];
+var SX_CRM_FINAIS = ["Sem Resposta","Sem Interesse","Timing Futuro","Empresa Fora do ICP","Perdido"];
+var SX_MOTIVOS_PERDA = ["Sem orçamento","Não respondeu","Já possui agência","Empresa pequena","Fora do ICP","Timing","Concorrente","Não é decisor","Projeto cancelado"];
 
 window.appActions = window.appActions || {};
 window.appActions.isAdmin = function(){ return (window.state && window.state.currentUserRole) === 'Administrador'; };
@@ -2885,6 +2979,10 @@ Object.assign(window, {
         // não recriar a tela do DRE (perderia a subaba ativa); atualiza só o Board se estiver visível
         var bd=document.getElementById('ftab-board');
         if(bd && !bd.classList.contains('hidden') && window.getTeamHTML){ bd.innerHTML=window.getTeamHTML(); if(window.lucide) lucide.createIcons(); }
+      } else if(window.state.activeTab==='leadsbase'){
+        // atualiza só a tabela (mantém foco na busca)
+        if(document.getElementById('lb-table') && window.appActions.renderLeadsBase){ window.appActions.renderLeadsBase(); }
+        else { renderContent(); }
       } else { renderContent(); }
     }catch(e){ console.warn(e); }
   },60); }
@@ -2899,6 +2997,8 @@ Object.assign(window, {
       ['contracts','contracts',null],
       ['expenses','expenses',null],
       ['team','team',null],
+      ['leadsbase','leadsBase',null],
+      ['tasks','tasks', function(){ if(window.state.activeTab==='meudia' && window.getMeuDiaHTML){ var el=document.getElementById('tab-content'); if(el){ el.innerHTML=window.getMeuDiaHTML(); if(window.lucide) lucide.createIcons(); } } }],
       ['users','users', function(){ var m=document.getElementById('users-modal'); if(m && !m.classList.contains('hidden')){ try{ window.appActions.renderUsersList(); }catch(e){} } try{ refreshOwnIdentity(); }catch(e){} }]
     ];
     var isAdminUser = window.state.currentUserRole==='Administrador';
@@ -2906,7 +3006,7 @@ Object.assign(window, {
     cfgs.forEach(function(c){
       var refq = db.collection(c[0]);
       // SDR/Closer veem apenas os leads atribuídos a eles; admin vê todos
-      if(c[0]==='leads' && !isAdminUser){ refq = db.collection('leads').where('ownerUid','==',myUid); }
+      if((c[0]==='leads'||c[0]==='tasks') && !isAdminUser){ refq = db.collection(c[0]).where('ownerUid','==',myUid); }
       var u=refq.onSnapshot(function(snap){
         var arr=[]; snap.forEach(function(d){ var o=d.data()||{}; o.id=d.id; arr.push(o); });
         window.state[c[1]]=arr; if(c[2]) c[2](); rerender();
@@ -2968,7 +3068,7 @@ Object.assign(window, {
       startListeners(); seedIfNeeded(p);
       try{ renderNav(); renderContent(); }catch(e){}
       if(window.lucide) lucide.createIcons();
-    }).catch(function(e){ console.error('perfil',e); window.showToast && window.showToast('Erro ao carregar perfil.','error'); });
+    }).catch(function(e){ console.error('perfil',e); window.showToast && window.showToast('Erro ao carregar perfil: '+((e&&e.code)||(e&&e.message)||e),'error'); });
   });
 
   window.appActions.doLogin=function(){
@@ -3044,7 +3144,7 @@ Object.assign(window, {
     var html='<thead><tr style="background:#0a0a0a"><th style="'+th+'">Nome</th><th style="'+th+'">E-mail</th><th style="'+th+'">Cargo</th><th style="'+th+';text-align:center"></th></tr></thead><tbody>';
     us.forEach(function(u){
       var isMaster=u.master || (u.email||'').toLowerCase()===MASTER;
-      var roles=['Administrador','Closer','SDR','Operacional'];
+      var roles=['Administrador','Closer','SDR','BDR','Operacional'];
       var opts=roles.map(function(r){ return '<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r+'</option>'; }).join('');
       var sel='<select onchange="window.appActions.changeUserRole(\''+u.id+'\', this.value)" '+(isMaster?'disabled':'')+' style="background:#0a0a0a;border:1px solid #333;border-radius:6px;padding:5px 8px;color:#fff;font-size:12px">'+opts+'</select>';
       var nome=(window.escapeHTML?window.escapeHTML(u.name||''):(u.name||''))+(isMaster?' <span style="font-size:9px;color:#ff5f1f;font-weight:800">MASTER</span>':'');
@@ -3066,8 +3166,15 @@ Object.assign(window, {
     var tag=document.getElementById('lead-tag').value;
     var notes=document.getElementById('lead-notes').value;
     if(!company){ window.showToast('Preencha o nome da empresa.','error'); return; }
-    if(id){ histPush('leads',id,{ company:company,name:name,phone:phone,email:email,value:value,tag:tag,notes:notes },'atualizou'); window.showToast('Lead atualizado!','success'); }
-    else { var m=me(); window.sxSet('leads',genId('L'),{ company:company,name:name,phone:phone,email:email,value:value,tag:tag,notes:notes,phase:'Tratativa Inicial', createdByUid:m.uid, createdByName:m.name, createdAt:new Date().toISOString(), ownerUid:m.uid, ownerName:m.name, history:[stamp('criou')] }); window.showToast('Lead adicionado!','success'); }
+    var enr=sxCollectEnrich();
+    if(id){ histPush('leads',id, Object.assign({ company:company,name:name,phone:phone,email:email,value:value,tag:tag,notes:notes }, enr), 'atualizou'); window.showToast('Lead atualizado!','success'); }
+    else {
+      var m=me(); var ownerUid=m.uid, ownerName=m.name, hist=[stamp('criou')], assignedMsg='';
+      if(window.state.currentUserRole==='Administrador'){ var a=window.sxPickAssignee(); if(a && a.id!==m.uid){ ownerUid=a.id; ownerName=a.name; hist.push(stamp('atribuiu',{ toOwner:a.name })); assignedMsg=' e atribuído a '+a.name; } }
+      window.sxSet('leads',genId('L'), Object.assign({ company:company,name:name,phone:phone,email:email,value:value,tag:tag,notes:notes,phase:'Empresa Identificada', createdByUid:m.uid, createdByName:m.name, createdAt:new Date().toISOString(), ownerUid:ownerUid, ownerName:ownerName, history:hist }, enr));
+      window.showToast('Lead adicionado'+assignedMsg+'!','success');
+    }
+    if(!id && window.__sxFromBaseLeadId){ var _bm=me(); window.sxUpdate('leadsbase', window.__sxFromBaseLeadId, { status:'Qualificado', sentToCRM:true, sentAt:new Date().toISOString(), sentByName:_bm.name, sentByUid:_bm.uid }); window.__sxFromBaseLeadId=null; }
     window.appActions.closeModal();
   };
   window.appActions.deleteLead=function(id){
@@ -3079,10 +3186,12 @@ Object.assign(window, {
   window.appActions.attemptMoveLead=function(id,targetPhase){
     var lead=(window.state.leads||[]).find(function(l){return l.id===id;}); if(!lead) return;
     if(lead.phase===targetPhase) return;
-    if(targetPhase==='Fechado (I.O.S)'){ window.appActions.openCloseDealModal(id); return; }
-    if(targetPhase==='Reunião de Diagnóstico'){ window.appActions.openMeetingModal(id); return; }
+    if(targetPhase==='Fechado'){ window.appActions.openCloseDealModal(id); return; }
+    if(targetPhase==='Reunião Agendada'){ window.appActions.openMeetingModal(id); return; }
     if(targetPhase==='Proposta Enviada'){ window.appActions.openProposalModal(id); return; }
+    if(targetPhase==='Em Cadência' && !lead.cadenceStarted){ window.appActions.iniciarCadencia(id); return; }
     if(targetPhase==='Negociação'){ var ok=Number(lead.value||0)>0 || (lead.proposal && Number(lead.proposal.total||0)>0); if(!ok){ window.showToast('Crie uma proposta com valor antes de mover para Negociação.','error'); window.appActions.openProposalModal(id); return; } }
+    if(targetPhase==='Respondeu'){ try{ sxStopCadence(id); }catch(e){} }
     var dir = (SX_CRM_STAGES.indexOf(targetPhase) > SX_CRM_STAGES.indexOf(lead.phase)) ? 'avançou' : 'retrocedeu';
     histPush('leads',id,{ phase:targetPhase },dir,{ from:lead.phase, to:targetPhase });
   };
@@ -3092,8 +3201,14 @@ Object.assign(window, {
     if(items.length===0){ window.showToast('Adicione ao menos um produto à proposta.','error'); return; }
     var tM=items.reduce(function(s,i){return s+Number(i.mrr||0);},0);
     var tS=items.reduce(function(s,i){return s+Number(i.setup||0);},0);
-    histPush('leads',lead.id,{ proposal:{ items:items, totalMrr:tM, totalSetup:tS, total:tM+tS, date:new Date().toLocaleDateString('pt-BR') }, value:tM+tS, phase:'Proposta Enviada' },'enviou proposta',{ total:tM+tS });
-    window.appActions.closeModal(); window.showToast('Proposta salva! Lead movido para Proposta Enviada.','success');
+    var jaTinhaFU = !!lead.proposalFollowups;
+    histPush('leads',lead.id,{ proposal:{ items:items, totalMrr:tM, totalSetup:tS, total:tM+tS, date:new Date().toLocaleDateString('pt-BR') }, value:tM+tS, phase:'Proposta Enviada', proposalFollowups:true },'enviou proposta',{ total:tM+tS });
+    if(!jaTinhaFU){
+      var m2=me(); var fu=[2,5,9]; var bb=db.batch();
+      fu.forEach(function(dd,i){ var due=new Date(); due.setHours(0,0,0,0); due=new Date(due.getTime()+dd*86400000); var tid='TK'+Date.now()+'_fp'+i+'_'+Math.floor(Math.random()*10000); bb.set(db.collection('tasks').doc(tid), { leadId:lead.id, company:(lead.company||lead.name||''), contact:(lead.name||''), phone:(lead.phone||''), type:'Follow-up proposta', dueDate:fmtDateOnly(due), status:'pendente', ownerUid:(lead.ownerUid||m2.uid), ownerName:(lead.ownerName||m2.name), createdAt:new Date().toISOString() }); });
+      bb.commit();
+    }
+    window.appActions.closeModal(); window.showToast('Proposta salva! Follow-ups agendados.','success');
   };
   window.appActions.confirmCloseDeal=function(){
     var leadId=document.getElementById('close-lead-id').value;
@@ -3102,7 +3217,7 @@ Object.assign(window, {
     var phaseIOS=document.getElementById('close-phase').value; var contractTime=document.getElementById('close-time').value;
     if(mrr===0 && setup===0){ window.showToast('Informe o MRR ou Setup.','error'); return; }
     var cm=me();
-    histPush('leads',leadId,{ phase:'Fechado (I.O.S)', value:(mrr+setup), closedByUid:cm.uid, closedByName:cm.name, closedAt:new Date().toISOString(), ownerUid:cm.uid, ownerName:cm.name },'fechou',{ mrr:mrr, setup:setup });
+    histPush('leads',leadId,{ phase:'Fechado', value:(mrr+setup), closedByUid:cm.uid, closedByName:cm.name, closedAt:new Date().toISOString(), ownerUid:cm.uid, ownerName:cm.name },'fechou',{ mrr:mrr, setup:setup });
     window.sxSet('clients','C_'+leadId,{ name:(lead?lead.company:'Novo cliente'), phase:phaseIOS, recurringValue:mrr, oneTimeValue:setup, status:'Ativo', contractMonths:contractTime, deliveryDate:new Date().toISOString().split('T')[0], system:'Criado via CRM', supplierCost:0, closedByUid:cm.uid, closedByName:cm.name });
     window.appActions.closeModal(); window.showToast('Contrato fechado! Projeto gerado no I.O.S.','success');
   };
@@ -3266,7 +3381,7 @@ Object.assign(window, {
     return db.collection(col).doc(String(id)).set(p,{merge:true}).catch(function(e){ console.error('histPush',col,e); window.showToast && window.showToast('Erro ao registrar histórico.','error'); });
   }
   function fmtDT(iso){ try{ var d=new Date(iso); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return iso||''; } }
-  var SX_ACT_ICON={ 'criou':'plus-circle','atualizou':'edit-3','avançou':'arrow-right-circle','retrocedeu':'arrow-left-circle','enviou proposta':'file-text','fechou':'check-circle','transferiu':'repeat','definiu prazo':'calendar-clock','removeu prazo':'calendar-x','agendou reunião':'calendar-check' };
+  var SX_ACT_ICON={ 'criou':'plus-circle','atualizou':'edit-3','avançou':'arrow-right-circle','retrocedeu':'arrow-left-circle','enviou proposta':'file-text','fechou':'check-circle','transferiu':'repeat','definiu prazo':'calendar-clock','removeu prazo':'calendar-x','agendou reunião':'calendar-check','finalizou':'flag','reabriu':'rotate-ccw','iniciou cadência':'list-checks','atribuiu':'user-check','reativou':'rotate-ccw' };
 
   function sxCanTransfer(lead){
     var u=window.state.user||{};
@@ -3303,11 +3418,18 @@ Object.assign(window, {
   /* Histórico exibido no modal do lead */
   var _origOpenLeadModal = window.appActions.openLeadModal;
   window.appActions.openLeadModal = function(id){
+    window.__sxFromBaseLeadId = null;
     if(_origOpenLeadModal) _origOpenLeadModal(id);
     var wrap=document.getElementById('lead-history-wrap'), box=document.getElementById('lead-history');
     var oWrap=document.getElementById('lead-owner-wrap');
     var lead = id ? (window.state.leads||[]).find(function(l){ return l.id===id; }) : null;
     var emEl=document.getElementById('lead-email'); if(emEl) emEl.value = (lead && lead.email) ? lead.email : '';
+    try{ sxFillEnrich(lead||{}); if(window.appActions.refreshLeadScore) window.appActions.refreshLeadScore(); }catch(e){}
+    var aiWrap=document.getElementById('lead-ai-wrap');
+    if(aiWrap){
+      if(lead && window.sxLeadSuggestion){ var sug=window.sxLeadSuggestion(lead); var pE=document.getElementById('lead-ai-prio'), nE=document.getElementById('lead-ai-next'); if(pE) pE.textContent='· '+sug.cls+' · '+sug.prio; if(nE) nE.innerHTML='<b>Próxima ação:</b> '+window.escapeHTML(sug.next)+(sug.pend?(' <span class="text-orange-400 font-bold">('+sug.pend+' tarefa(s) pendente(s))</span>'):''); aiWrap.classList.remove('hidden'); }
+      else { aiWrap.classList.add('hidden'); }
+    }
     if(!lead){ if(wrap){ wrap.classList.add('hidden'); } if(box){ box.innerHTML=''; } if(oWrap){ oWrap.classList.add('hidden'); } return; }
     // Responsável + transferência
     if(oWrap){
@@ -3474,8 +3596,8 @@ Object.assign(window, {
   window.appActions.meetingMoveOnly=function(){
     var id=document.getElementById('mt-lead-id').value;
     var lead=(window.state.leads||[]).find(function(l){ return l.id===id; }); if(!lead){ window.appActions.closeMeetingModal(); return; }
-    histPush('leads',id,{ phase:'Reunião de Diagnóstico' },'avançou',{ from:lead.phase, to:'Reunião de Diagnóstico' });
-    window.appActions.closeMeetingModal(); window.showToast('Lead movido para Reunião de Diagnóstico.','success');
+    histPush('leads',id,{ phase:'Reunião Agendada' },'avançou',{ from:lead.phase, to:'Reunião Agendada' });
+    window.appActions.closeMeetingModal(); window.showToast('Lead movido para Reunião Agendada.','success');
   };
   window.appActions.confirmMeeting=function(){
     var id=document.getElementById('mt-lead-id').value;
@@ -3502,7 +3624,7 @@ Object.assign(window, {
     window.showToast('Criando evento no Google Agenda...','info');
     gcalCreateEvent(ev, function(created){
       var link=created.htmlLink||''; var meet=created.hangoutLink||'';
-      histPush('leads',id,{ phase:'Reunião de Diagnóstico', meetingAt:dtLocal, meetingCloserEmail:closerEmail, meetingCloserName:closerName, meetingClientEmail:clientEmail, meetingEventId:created.id||'', meetingEventLink:link, meetingMeetLink:meet },'agendou reunião',{ closer:closerName, at:dtLocal, link:link });
+      histPush('leads',id,{ phase:'Reunião Agendada', meetingAt:dtLocal, meetingCloserEmail:closerEmail, meetingCloserName:closerName, meetingClientEmail:clientEmail, meetingEventId:created.id||'', meetingEventLink:link, meetingMeetLink:meet },'agendou reunião',{ closer:closerName, at:dtLocal, link:link });
       window.appActions.closeMeetingModal();
       window.showToast('Reunião agendada e convites enviados!','success');
     }, function(err){
@@ -3521,7 +3643,7 @@ Object.assign(window, {
     if(us.length===0){ rows='<tr><td colspan="4" style="text-align:center;padding:24px;color:#666">Nenhum acesso cadastrado ainda.</td></tr>'; }
     else { us.forEach(function(u){
       var isMaster=u.master || (u.email||'').toLowerCase()===MASTER;
-      var roles=['Administrador','Closer','SDR','Operacional'];
+      var roles=['Administrador','Closer','SDR','BDR','Operacional'];
       var opts=roles.map(function(r){ return '<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r+'</option>'; }).join('');
       var sel='<select onchange="window.appActions.changeUserRole(\''+u.id+'\', this.value)" '+(isMaster?'disabled':'')+' style="background:#0a0a0a;border:1px solid #333;border-radius:6px;padding:5px 8px;color:#fff;font-size:12px">'+opts+'</select>';
       var nome=window.escapeHTML(u.name||'')+(isMaster?' <span style="font-size:9px;color:#ff5f1f;font-weight:800">MASTER</span>':'');
@@ -3541,6 +3663,447 @@ Object.assign(window, {
   };
   // "Gerenciar Usuários" agora leva ao Board (integrado)
   window.appActions.openUsersModal=function(){ window.appActions.goToBoard(); };
+
+  /* ---------- Base de Leads (Firestore, compartilhada entre a equipe) ---------- */
+  lbLoad=function(){ if(!window.state.leadsBase) window.state.leadsBase=[]; return window.state.leadsBase; };
+  lbSave=function(){ /* persistência via Firestore */ };
+  function lbBatchWrite(items, done){
+    var i=0;
+    (function chunk(){
+      if(i>=items.length){ if(done) done(); return; }
+      var b=db.batch(), n=0;
+      for(; i<items.length && n<400; i++, n++){ var it=items[i]; var id=String(it.id||genId('LB')); var o=JSON.parse(JSON.stringify(it)); delete o.id; b.set(db.collection('leadsbase').doc(id), o); }
+      b.commit().then(chunk).catch(function(e){ console.error('lb batch',e); window.showToast && window.showToast('Erro ao importar parte dos leads.','error'); if(done) done(); });
+    })();
+  }
+  window.appActions.importLeadsCSV=function(input){
+    var file=input.files && input.files[0]; if(!file) return;
+    var nome=(file.name||'').toLowerCase(); var isXlsx=(nome.indexOf('.xlsx')>=0||nome.indexOf('.xls')>=0);
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var novos;
+        if(isXlsx){
+          if(!window.XLSX){ alert('Biblioteca de Excel ainda carregando. Tente novamente ou use CSV.'); return; }
+          var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}); var ws=wb.Sheets[wb.SheetNames[0]];
+          var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''}); if(rows.length<2){ alert('Planilha vazia ou sem dados.'); return; }
+          novos=lbBuildLeads(rows[0], rows.slice(1));
+        } else {
+          var txt=(typeof e.target.result==='string')?e.target.result:new TextDecoder('utf-8').decode(e.target.result);
+          novos=lbParseCSV(txt);
+        }
+        if(!novos || novos.length===0){ alert('Nenhum lead válido encontrado. Verifique as colunas (Nome do Contato, Empresa, WhatsApp...).'); return; }
+        input.value='';
+        lbBatchWrite(novos, function(){ window.showToast && window.showToast(novos.length+' leads importados para a base compartilhada!','success'); });
+      }catch(err){ alert('Erro ao importar: '+err.message); }
+    };
+    if(isXlsx) reader.readAsArrayBuffer(file); else reader.readAsText(file,'UTF-8');
+  };
+  window.appActions.deleteLeadBase=function(id){ if(!confirm('Remover este lead da base?')) return; window.sxDelete('leadsbase',id); };
+  window.appActions.clearLeadsBase=function(){
+    if(!confirm('Zerar TODA a base de leads? Esta ação é irreversível e afeta todos os usuários.')) return;
+    db.collection('leadsbase').get().then(function(snap){ var refs=[]; snap.forEach(function(d){ refs.push(d.ref); }); var i=0; (function chunk(){ if(i>=refs.length) return; var b=db.batch(),n=0; for(;i<refs.length&&n<400;i++,n++){ b.delete(refs[i]); } b.commit().then(chunk); })(); window.showToast && window.showToast('Base zerada.','success'); });
+  };
+  window.appActions.cycleLeadStatus=function(id){
+    var ordem=['Novo','Em contato','Qualificado','Descartado'];
+    var l=(window.state.leadsBase||[]).find(function(x){ return x.id===id; }); if(!l) return;
+    var i=ordem.indexOf(l.status||'Novo'); window.sxUpdate('leadsbase', id, { status: ordem[(i+1)%ordem.length] });
+  };
+  window.appActions.sendBaseLeadToCRM=function(id){
+    var l=(window.state.leadsBase||[]).find(function(x){ return x.id===id; }); if(!l) return;
+    if(l.sentToCRM){ if(!confirm('Este lead já foi enviado ao CRM. Abrir mesmo assim para criar outro card?')) return; }
+    // abre o card do CRM (novo) e pré-preenche para revisão
+    window.appActions.openLeadModal();
+    window.__sxFromBaseLeadId = id;
+    var comp = l.empresa || l.nome || '';
+    var sel=document.getElementById('lead-company');
+    if(sel){
+      if(comp && ![].some.call(sel.options,function(o){ return o.value===comp; })){ var op=document.createElement('option'); op.value=comp; op.text=comp; sel.insertBefore(op, sel.options[sel.options.length-1]); }
+      sel.value=comp;
+    }
+    var setV=function(k,v){ var el=document.getElementById(k); if(el) el.value=v||''; };
+    setV('lead-name', l.nome||'');
+    setV('lead-phone', l.whatsapp||l.telefone||'');
+    setV('lead-email', l.email||'');
+    var tagSel=document.getElementById('lead-tag');
+    if(tagSel){ var found=false; for(var i=0;i<tagSel.options.length;i++){ if((l.origem||'').toUpperCase()===tagSel.options[i].value.toUpperCase()){ tagSel.value=tagSel.options[i].value; found=true; break; } } if(!found){ var ob=tagSel.querySelector('option[value="OUTBOUND"]'); if(ob) tagSel.value='OUTBOUND'; } }
+    var notas=[];
+    if(l.origem) notas.push('Origem (base): '+l.origem);
+    if(l.segmento) notas.push('Segmento: '+l.segmento);
+    if(l.faturamento) notas.push('Faturamento estimado: '+l.faturamento);
+    if(l.instagram) notas.push('Instagram: '+l.instagram);
+    if(l.linkedin) notas.push('LinkedIn: '+l.linkedin);
+    setV('lead-notes', notas.join('\n'));
+    window.showToast('Revise os dados e salve para criar o card no CRM.','info');
+  };
+
+  /* ---------- Lead Score (A/B/C/D) ---------- */
+  window.sxLeadScore=function(l){
+    if(!l) return 0;
+    var s=0;
+    var func=Number((((l.funcionarios!=null?l.funcionarios:''))+'').replace(/\D/g,''))||0;
+    if(func>100) s+=40; else if(func>=20) s+=20;
+    if(l.crmUtilizado || l.possuiCRM) s+=20;
+    if(l.metaAds || l.googleAds) s+=30;
+    if(l.marketingInterno) s+=15;
+    var idx=SX_CRM_STAGES.indexOf(l.phase);
+    if(idx>=SX_CRM_STAGES.indexOf('Respondeu')) s+=20;
+    if(idx>=SX_CRM_STAGES.indexOf('Reunião Agendada') || l.meetingAt) s+=40;
+    return s;
+  };
+  window.sxScoreClass=function(s){ if(s>=90) return 'A'; if(s>=60) return 'B'; if(s>=30) return 'C'; return 'D'; };
+  window.sxScoreColor=function(c){ return c==='A'?'#10b981':(c==='B'?'#3b82f6':(c==='C'?'#f59e0b':'#6b7280')); };
+
+  /* ---------- Estados finais / Finalizar lead ---------- */
+  window.appActions.openFinalizeModal=function(id){
+    var l=(window.state.leads||[]).find(function(x){ return x.id===id; }); if(!l) return;
+    document.getElementById('fz-lead-id').value=id;
+    document.getElementById('fz-company').innerText=l.company||l.name||'—';
+    document.getElementById('fz-state').innerHTML=SX_CRM_FINAIS.map(function(s){ return '<option value="'+s+'">'+s+'</option>'; }).join('');
+    document.getElementById('fz-reason').innerHTML='<option value="">Selecione (opcional)</option>'+SX_MOTIVOS_PERDA.map(function(s){ return '<option value="'+s+'">'+s+'</option>'; }).join('');
+    document.getElementById('fz-notes').value='';
+    var m=document.getElementById('modal-finalize'); m.classList.remove('hidden'); m.classList.add('flex'); if(window.lucide) lucide.createIcons();
+  };
+  window.appActions.closeFinalizeModal=function(){ var m=document.getElementById('modal-finalize'); m.classList.add('hidden'); m.classList.remove('flex'); };
+  window.appActions.confirmFinalize=function(){
+    var id=document.getElementById('fz-lead-id').value;
+    var state=document.getElementById('fz-state').value;
+    var reason=document.getElementById('fz-reason').value;
+    var notes=(document.getElementById('fz-notes').value||'').trim();
+    if(!state){ window.showToast('Selecione o estado final.','error'); return; }
+    try{ sxStopCadence(id); }catch(e){}
+    histPush('leads',id,{ closedState:state, lossReason:reason, lossNotes:notes, closedStateAt:new Date().toISOString() },'finalizou',{ to:state+(reason?(' · '+reason):'') });
+    window.appActions.closeFinalizeModal();
+    window.showToast('Lead finalizado como "'+state+'".','success');
+  };
+  window.appActions.reopenLead=function(id){
+    var l=(window.state.leads||[]).find(function(x){ return x.id===id; }); if(!l) return;
+    if(!confirm('Reabrir "'+(l.company||l.name||'')+'" e voltar ao funil?')) return;
+    histPush('leads',id,{ closedState:'', lossReason:'', lossNotes:'' },'reabriu',{});
+    window.showToast('Lead reaberto no funil.','success');
+  };
+  window.appActions.setCrmView=function(v){ window.__sxCrmView=v; try{ renderContent(); }catch(e){} };
+  window.sxFinalizadosHTML=function(){
+    var leads=(window.state.leads||[]).filter(function(l){ return l.closedState; });
+    var html='<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">';
+    if(leads.length===0){ html+='<div class="col-span-full py-16 text-center border border-dashed border-[#333] rounded-2xl bg-[#0d0d0d]"><i data-lucide="flag" class="w-10 h-10 mx-auto text-gray-600 mb-3 opacity-50"></i><p class="text-gray-500 font-medium">Nenhum lead finalizado.</p></div>'; }
+    leads.forEach(function(l){
+      html+='<div class="bg-[#0d0d0d] border border-[#222] rounded-2xl p-4">'+
+        '<div class="flex items-start justify-between mb-1 gap-2"><h4 class="text-sm font-bold text-white">'+window.escapeHTML(l.company||l.name||'—')+'</h4><span class="text-[9px] font-black uppercase px-2 py-0.5 rounded border text-red-400 bg-red-900/20 border-red-900/40 shrink-0">'+window.escapeHTML(l.closedState)+'</span></div>'+
+        (l.lossReason?'<div class="text-[11px] text-gray-400 mb-1">Motivo: '+window.escapeHTML(l.lossReason)+'</div>':'')+
+        (l.lossNotes?'<div class="text-[11px] text-gray-500 mb-2">'+window.escapeHTML(l.lossNotes)+'</div>':'')+
+        '<div class="text-[10px] text-gray-600 mb-3">Última etapa: '+window.escapeHTML(l.phase||'-')+' · Resp.: '+window.escapeHTML(l.ownerName||'—')+'</div>'+
+        '<button onclick="window.appActions.reopenLead(\''+l.id+'\')" class="w-full py-2 rounded-lg text-xs font-bold bg-emerald-900/20 border border-emerald-900/50 text-emerald-400 hover:bg-emerald-900/30 transition flex items-center justify-center gap-1"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reabrir</button>'+
+      '</div>';
+    });
+    html+='</div>';
+    return html;
+  };
+
+  /* ---------- Enriquecimento / Tags do lead ---------- */
+  var SX_TAGS = {
+    'Segmento': ['Indústria','Clínica','SaaS','Imobiliária','Contabilidade','Restaurante','Varejo'],
+    'Serviço de interesse': ['Google Ads','Meta Ads','CRM','Automação','IA','Sites','SEO','Branding'],
+    'Prioridade': ['ICP A','ICP B','ICP C'],
+    'Origem': ['LinkedIn','Apollo','Evento','Indicação','Google','Instagram','Lista','Prospecção Manual']
+  };
+  window.__sxLeadTags = [];
+  window.appActions.toggleLeadTag=function(tag){
+    var i=window.__sxLeadTags.indexOf(tag);
+    if(i>=0) window.__sxLeadTags.splice(i,1); else window.__sxLeadTags.push(tag);
+    sxRenderLeadTags();
+  };
+  function sxRenderLeadTags(){
+    var box=document.getElementById('lead-tags-box'); if(!box) return;
+    var sel=window.__sxLeadTags||[]; var html='';
+    Object.keys(SX_TAGS).forEach(function(grp){
+      html+='<div class="w-full text-[9px] text-gray-600 uppercase font-bold tracking-widest mt-1.5">'+grp+'</div>';
+      SX_TAGS[grp].forEach(function(t){
+        var on=sel.indexOf(t)>=0;
+        html+='<button type="button" onclick="window.appActions.toggleLeadTag(\''+t.replace(/'/g,"\\'")+'\')" class="text-[10px] font-bold px-2 py-1 rounded-md border transition '+(on?'bg-orange-600 text-white border-orange-600':'bg-[#0a0a0a] text-gray-400 border-[#333] hover:text-white')+'">'+window.escapeHTML(t)+'</button>';
+      });
+    });
+    box.innerHTML=html;
+  }
+  function sxCollectEnrich(){
+    var g=function(id){ var e=document.getElementById(id); return e?(e.value||'').trim():''; };
+    var chk=function(id){ var e=document.getElementById(id); return e?!!e.checked:false; };
+    return { site:g('lead-site'), cidade:g('lead-cidade'), estado:g('lead-estado'), segmento:g('lead-segmento'), cargo:g('lead-cargo'), linkedin:g('lead-linkedin'), funcionarios:g('lead-funcionarios'), receita:g('lead-receita'), crmUtilizado:chk('lead-crm'), metaAds:chk('lead-metaads'), googleAds:chk('lead-googleads'), marketingInterno:chk('lead-mktinterno'), tags:(window.__sxLeadTags||[]).slice() };
+  }
+  window.sxCollectEnrich = sxCollectEnrich;
+  function sxFillEnrich(l){
+    l=l||{};
+    var s=function(id,v){ var e=document.getElementById(id); if(e) e.value=(v==null?'':v); };
+    var c=function(id,v){ var e=document.getElementById(id); if(e) e.checked=!!v; };
+    s('lead-site',l.site); s('lead-cidade',l.cidade); s('lead-estado',l.estado); s('lead-segmento',l.segmento); s('lead-cargo',l.cargo); s('lead-linkedin',l.linkedin); s('lead-funcionarios',l.funcionarios); s('lead-receita',l.receita);
+    c('lead-crm',l.crmUtilizado); c('lead-metaads',l.metaAds); c('lead-googleads',l.googleAds); c('lead-mktinterno',l.marketingInterno);
+    window.__sxLeadTags = (l.tags&&l.tags.slice)?l.tags.slice():[];
+    sxRenderLeadTags();
+  }
+  window.sxFillEnrich = sxFillEnrich;
+  window.appActions.refreshLeadScore=function(){
+    var badge=document.getElementById('lead-score-badge'); if(!badge) return;
+    var enr=sxCollectEnrich();
+    var idEl=document.getElementById('lead-id'); var lead=(idEl&&idEl.value)?(window.state.leads||[]).find(function(x){return x.id===idEl.value;}):null;
+    var tmp=Object.assign({}, lead||{}, enr);
+    var sc=window.sxLeadScore(tmp), cls=window.sxScoreClass(sc), col=window.sxScoreColor(cls);
+    badge.textContent='Score '+sc+' · '+cls;
+    badge.style.color=col; badge.style.background=col+'1f'; badge.style.border='1px solid '+col+'55';
+  };
+
+  /* ---------- Cadência (sequência automática de tarefas) ---------- */
+  var SX_CADENCIA = [
+    {d:1, type:'Email'}, {d:2, type:'LinkedIn'}, {d:4, type:'Ligação'}, {d:5, type:'WhatsApp'},
+    {d:7, type:'Email'}, {d:10, type:'Ligação'}, {d:14, type:'WhatsApp'}, {d:21, type:'Última tentativa'}
+  ];
+  var SX_TASK_ICON = { 'Email':'mail','LinkedIn':'linkedin','Ligação':'phone','WhatsApp':'message-circle','Última tentativa':'flag','Follow-up proposta':'file-text','Reativação':'rotate-ccw' };
+  function fmtDateOnly(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+  function sxTodayStr(){ var t=new Date(); t.setHours(0,0,0,0); return fmtDateOnly(t); }
+  window.appActions.iniciarCadencia=function(leadId){
+    var lead=(window.state.leads||[]).find(function(l){ return l.id===leadId; }); if(!lead) return;
+    if(lead.cadenceStarted){ window.showToast('A cadência deste lead já foi iniciada.','error'); return; }
+    var m=me(); var today=new Date(); today.setHours(0,0,0,0);
+    var b=db.batch();
+    SX_CADENCIA.forEach(function(step, i){
+      var due=new Date(today.getTime()+step.d*86400000);
+      var tid='TK'+Date.now()+'_'+i+'_'+Math.floor(Math.random()*10000);
+      b.set(db.collection('tasks').doc(tid), { leadId:leadId, company:(lead.company||lead.name||''), contact:(lead.name||''), phone:(lead.phone||''), type:step.type, dueDate:fmtDateOnly(due), status:'pendente', ownerUid:(lead.ownerUid||m.uid), ownerName:(lead.ownerName||m.name), cadenceStep:step.d, createdAt:new Date().toISOString() });
+    });
+    b.set(db.collection('leads').doc(leadId), { cadenceStarted:true, phase:'Em Cadência', lastUpdatedAt:new Date().toISOString(), history: firebase.firestore.FieldValue.arrayUnion(stamp('iniciou cadência')) }, {merge:true});
+    b.commit().then(function(){ window.showToast('Cadência iniciada: '+SX_CADENCIA.length+' tarefas criadas.','success'); }).catch(function(e){ console.error('cadencia',e); window.showToast('Erro ao iniciar cadência.','error'); });
+  };
+  function sxStopCadence(leadId){
+    var pend=(window.state.tasks||[]).filter(function(t){ return t.leadId===leadId && t.status==='pendente'; });
+    if(pend.length===0) return;
+    var b=db.batch();
+    pend.forEach(function(t){ b.set(db.collection('tasks').doc(t.id), { status:'pulado', doneAt:new Date().toISOString() }, {merge:true}); });
+    b.commit();
+  }
+  window.appActions.markTaskDone=function(id){ window.sxUpdate('tasks', id, { status:'feito', doneAt:new Date().toISOString(), doneByName:me().name }); window.showToast('Tarefa concluída!','success'); };
+  window.appActions.skipTask=function(id){ window.sxUpdate('tasks', id, { status:'pulado', doneAt:new Date().toISOString() }); };
+
+  /* ---------- Painel "Meu Dia" ---------- */
+  function sxWaLink2(phone, nome){ var d=(phone||'').replace(/\D/g,''); if(!d) return ''; if(d.length<=11) d='55'+d; var txt=encodeURIComponent('Olá '+((nome||'').split(' ')[0]||'')+', tudo bem?'); return 'https://wa.me/'+d+'?text='+txt; }
+  window.getMeuDiaHTML=function(){
+    var today=sxTodayStr();
+    var isAdmin=window.state.currentUserRole==='Administrador';
+    var myUid=(window.state.user||{}).uid;
+    var tasks=(window.state.tasks||[]).filter(function(t){ return t.status==='pendente' && (isAdmin || t.ownerUid===myUid); });
+    var hoje=tasks.filter(function(t){ return (t.dueDate||'') <= today; });
+    hoje.sort(function(a,b){ return (a.dueDate||'').localeCompare(b.dueDate||''); });
+    var leadsMine=(window.state.leads||[]).filter(function(l){ return !l.closedState && (isAdmin || l.ownerUid===myUid); });
+    var reunioesHoje=leadsMine.filter(function(l){ return (l.meetingAt||'').slice(0,10)===today; });
+    var propostas=leadsMine.filter(function(l){ return l.phase==='Proposta Enviada'; });
+    var cont=function(tp){ return hoje.filter(function(t){ return t.type===tp; }).length; };
+    var atrasadas=hoje.filter(function(t){ return (t.dueDate||'') < today; }).length;
+
+    var html='<div class="space-y-6 animate-fade-in pb-10">';
+    html+='<div><h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-3"><i data-lucide="sun" class="text-orange-500 w-7 h-7"></i> Meu Dia</h2><p class="text-sm text-gray-400 mt-1">O que precisa ser feito hoje. Foque na lista e siga em frente.</p></div>';
+    // KPIs
+    var kpi=function(lbl,val,cor){ return '<div class="bg-[#111] border border-[#222] rounded-2xl p-4 text-center"><div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">'+lbl+'</div><div class="text-2xl font-black '+cor+'">'+val+'</div></div>'; };
+    html+='<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">';
+    html+=kpi('Tarefas hoje', hoje.length, 'text-white');
+    html+=kpi('Atrasadas', atrasadas, atrasadas>0?'text-red-400':'text-gray-500');
+    html+=kpi('Ligações', cont('Ligação'), 'text-blue-400');
+    html+=kpi('E-mails', cont('Email'), 'text-purple-400');
+    html+=kpi('WhatsApp', cont('WhatsApp'), 'text-emerald-400');
+    html+=kpi('Reuniões', reunioesHoje.length, 'text-orange-400');
+    html+=kpi('Propostas', propostas.length, 'text-yellow-400');
+    html+='</div>';
+
+    // Reuniões do dia
+    if(reunioesHoje.length){
+      html+='<div><h3 class="text-sm font-black text-white uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="calendar-check" class="w-4 h-4 text-orange-500"></i> Reuniões de hoje</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3">';
+      reunioesHoje.forEach(function(l){
+        var hora=(l.meetingAt||'').slice(11,16);
+        html+='<div onclick="window.appActions.openLeadModal(\''+l.id+'\')" class="bg-[#111] border border-[#222] rounded-xl p-4 cursor-pointer hover:border-orange-700/50 transition flex items-center justify-between gap-3"><div><div class="text-sm font-bold text-white">'+window.escapeHTML(l.company||l.name||'')+'</div><div class="text-[11px] text-gray-500">'+(hora?('às '+hora):'')+(l.meetingCloserName?(' · Closer: '+window.escapeHTML(l.meetingCloserName)):'')+'</div></div>'+(l.meetingMeetLink?'<a href="'+window.escapeHTML(l.meetingMeetLink)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="text-[11px] font-bold text-emerald-400 hover:underline shrink-0">Entrar</a>':'')+'</div>';
+      });
+      html+='</div></div>';
+    }
+
+    // Tarefas de hoje
+    html+='<div><h3 class="text-sm font-black text-white uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="list-checks" class="w-4 h-4 text-orange-500"></i> Tarefas ('+hoje.length+')</h3>';
+    if(hoje.length===0){ html+='<div class="py-12 text-center border border-dashed border-[#333] rounded-2xl bg-[#0d0d0d]"><i data-lucide="check-circle" class="w-10 h-10 mx-auto text-emerald-600 mb-3"></i><p class="text-gray-400 font-medium">Tudo em dia! Nenhuma tarefa pendente para hoje. 🎉</p></div>'; }
+    else {
+      html+='<div class="space-y-2">';
+      hoje.forEach(function(t){
+        var ic=SX_TASK_ICON[t.type]||'circle';
+        var atrasada=(t.dueDate||'')<today;
+        var wa=(t.type==='WhatsApp')?sxWaLink2(t.phone, t.contact):'';
+        var waBtn = wa ? '<a href="'+wa+'" target="_blank" rel="noopener" class="px-2.5 py-1.5 rounded-md bg-[#0a0a0a] border border-[#333] text-[#25D366] hover:border-[#25D366]/50 transition text-xs font-bold" title="Abrir WhatsApp"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i></a>' : '';
+        html+='<div class="bg-[#111] border '+(atrasada?'border-red-900/50':'border-[#222]')+' rounded-xl p-3 flex items-center gap-3">'+
+          '<div class="w-9 h-9 rounded-lg bg-[#0a0a0a] border border-[#333] flex items-center justify-center text-orange-400 shrink-0"><i data-lucide="'+ic+'" class="w-4 h-4"></i></div>'+
+          '<div class="flex-1 min-w-0 cursor-pointer" onclick="window.appActions.openLeadModal(\''+t.leadId+'\')"><div class="text-sm font-bold text-white truncate">'+window.escapeHTML(t.type)+' · '+window.escapeHTML(t.company||'')+'</div><div class="text-[11px] '+(atrasada?'text-red-400':'text-gray-500')+'">'+(atrasada?'Atrasada — ':'')+'venc. '+window.escapeHTML((t.dueDate||'').split('-').reverse().join('/'))+(t.contact?(' · '+window.escapeHTML(t.contact)):'')+'</div></div>'+
+          '<div class="flex items-center gap-1.5 shrink-0">'+waBtn+'<button onclick="window.appActions.skipTask(\''+t.id+'\')" class="px-2.5 py-1.5 rounded-md bg-[#0a0a0a] border border-[#333] text-gray-400 hover:text-white transition text-xs font-bold" title="Pular">Pular</button><button onclick="window.appActions.markTaskDone(\''+t.id+'\')" class="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition text-xs font-bold flex items-center gap-1"><i data-lucide="check" class="w-3.5 h-3.5"></i> Feito</button></div>'+
+        '</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+
+    // Propostas pendentes
+    if(propostas.length){
+      html+='<div><h3 class="text-sm font-black text-white uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4 text-orange-500"></i> Propostas pendentes</h3><div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">';
+      propostas.forEach(function(l){
+        html+='<div onclick="window.appActions.openLeadModal(\''+l.id+'\')" class="bg-[#111] border border-[#222] rounded-xl p-4 cursor-pointer hover:border-orange-700/50 transition"><div class="text-sm font-bold text-white">'+window.escapeHTML(l.company||l.name||'')+'</div><div class="text-[11px] text-emerald-400 font-bold mt-1">'+window.formatCurrency(Number(l.value||0))+'</div></div>';
+      });
+      html+='</div></div>';
+    }
+
+    // Reativação (leads sem atividade há 30+ dias)
+    var reativar=leadsMine.filter(function(l){ var t=l.lastUpdatedAt||l.createdAt; return t && (Date.now()-new Date(t).getTime())>30*86400000; });
+    if(reativar.length){
+      html+='<div><h3 class="text-sm font-black text-white uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="rotate-ccw" class="w-4 h-4 text-orange-500"></i> Reativação (30+ dias parados)</h3><div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">';
+      reativar.slice(0,12).forEach(function(l){ var t=l.lastUpdatedAt||l.createdAt; var dias=Math.floor((Date.now()-new Date(t).getTime())/86400000); html+='<div class="bg-[#111] border border-[#222] rounded-xl p-3 flex items-center justify-between gap-2"><div class="min-w-0 cursor-pointer" onclick="window.appActions.openLeadModal(\''+l.id+'\')"><div class="text-xs font-bold text-white truncate">'+window.escapeHTML(l.company||l.name||'')+'</div><div class="text-[10px] text-gray-500 truncate">'+window.escapeHTML(l.phase||'')+' · '+dias+' dias</div></div><button onclick="event.stopPropagation();window.appActions.reativarLead(\''+l.id+'\')" class="px-2.5 py-1.5 rounded-md bg-orange-600 hover:bg-orange-700 text-white text-[10px] font-bold shrink-0">Reativar</button></div>'; });
+      html+='</div></div>';
+    }
+
+    html+='</div>';
+    return html;
+  };
+
+  /* ---------- Painel do Gestor ---------- */
+  window.getGestorHTML=function(){
+    var leads=window.state.leads||[];
+    function idx(l){ return SX_CRM_STAGES.indexOf(l.phase); }
+    function reached(stage){ var si=SX_CRM_STAGES.indexOf(stage); return leads.filter(function(l){ return idx(l)>=si; }).length; }
+    function pct(a,b){ return b>0? Math.round(a/b*100):0; }
+    var nEmp=leads.length, nEnr=reached('Lead Enriquecido'), n1=reached('Primeiro Contato'), nCad=reached('Em Cadência'),
+        nResp=reached('Respondeu'), nQual=reached('Qualificado'), nRAg=reached('Reunião Agendada'), nRRe=reached('Reunião Realizada'),
+        nProp=reached('Proposta Enviada'), nNeg=reached('Negociação'),
+        nFech=leads.filter(function(l){ return l.phase==='Fechado' && !l.closedState; }).length;
+    var taxaResposta=pct(nResp, n1), taxaReuniao=pct(nRAg, nResp), taxaProposta=pct(nProp, nRRe>0?nRRe:nRAg), taxaFechamento=pct(nFech, nProp);
+
+    // Pipeline por etapa (ativos)
+    var pipe=SX_CRM_STAGES.map(function(st){ var arr=leads.filter(function(l){ return l.phase===st && !l.closedState; }); return { st:st, n:arr.length, val:arr.reduce(function(s,l){ return s+Number(l.value||0); },0) }; });
+    var maxN=Math.max.apply(null, pipe.map(function(p){ return p.n; }).concat([1]));
+    // Forecast ponderado
+    var pesos={'Reunião Agendada':0.2,'Reunião Realizada':0.35,'Proposta Enviada':0.5,'Negociação':0.7};
+    var forecast=0; leads.forEach(function(l){ if(l.closedState||l.phase==='Fechado') return; forecast+=Number(l.value||0)*(pesos[l.phase]||0); });
+    // Motivos de perda
+    var finalizados=leads.filter(function(l){ return l.closedState; });
+    var porEstado={}; finalizados.forEach(function(l){ porEstado[l.closedState]=(porEstado[l.closedState]||0)+1; });
+    var porMotivo={}; finalizados.forEach(function(l){ if(l.lossReason){ porMotivo[l.lossReason]=(porMotivo[l.lossReason]||0)+1; } });
+    // Leads parados (>7 dias sem atualização)
+    var now=Date.now(); var parados=leads.filter(function(l){ if(l.closedState||l.phase==='Fechado') return false; var t=l.lastUpdatedAt||l.createdAt; if(!t) return false; return (now-new Date(t).getTime())>7*86400000; });
+    // Produtividade por responsável
+    var byOwner={}; leads.forEach(function(l){ var o=l.ownerName||'—'; if(!byOwner[o]) byOwner[o]={leads:0,reunioes:0,fechados:0}; byOwner[o].leads++; if(idx(l)>=SX_CRM_STAGES.indexOf('Reunião Agendada')) byOwner[o].reunioes++; if(l.phase==='Fechado'&&!l.closedState) byOwner[o].fechados++; });
+    // Tempo médio até fechamento
+    var fechs=leads.filter(function(l){ return l.phase==='Fechado' && !l.closedState && l.createdAt && l.closedAt; });
+    var avgDays=fechs.length? Math.round(fechs.reduce(function(s,l){ return s+(new Date(l.closedAt)-new Date(l.createdAt)); },0)/fechs.length/86400000):0;
+
+    var esc=window.escapeHTML, fmt=window.formatCurrency;
+    var html='<div class="space-y-6 animate-fade-in pb-10">';
+    html+='<div><h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-3"><i data-lucide="bar-chart-3" class="text-orange-500 w-7 h-7"></i> Painel Comercial (Gestor)</h2><p class="text-sm text-gray-400 mt-1">Visão geral da prospecção Outbound — funil, taxas e produtividade.</p></div>';
+
+    // KPIs principais
+    var kpi=function(l,v,c){ return '<div class="bg-[#111] border border-[#222] rounded-2xl p-4"><div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">'+l+'</div><div class="text-2xl font-black '+(c||'text-white')+'">'+v+'</div></div>'; };
+    html+='<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">';
+    html+=kpi('Empresas', nEmp)+kpi('Enriquecidos', nEnr)+kpi('1º Contato', n1)+kpi('Responderam', nResp,'text-blue-400')+kpi('Reuniões', nRAg,'text-orange-400')+kpi('Propostas', nProp,'text-yellow-400')+kpi('Fechados', nFech,'text-emerald-400');
+    html+='</div>';
+
+    // Taxas
+    var taxa=function(l,v,c){ return '<div class="bg-[#111] border border-[#222] rounded-2xl p-5 text-center"><div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">'+l+'</div><div class="text-3xl font-black '+c+'">'+v+'%</div></div>'; };
+    html+='<div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
+    html+=taxa('Taxa de Resposta', taxaResposta,'text-blue-400')+taxa('Taxa de Reunião', taxaReuniao,'text-orange-400')+taxa('Taxa de Proposta', taxaProposta,'text-yellow-400')+taxa('Taxa de Fechamento', taxaFechamento,'text-emerald-400');
+    html+='</div>';
+
+    // Forecast + tempo
+    html+='<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
+    html+='<div class="bg-[#1a1a1a] border border-orange-900/50 rounded-2xl p-5"><div class="text-[10px] text-orange-500 uppercase font-black tracking-widest mb-1">Forecast Ponderado</div><div class="text-2xl font-black text-orange-400">'+fmt(forecast)+'</div><div class="text-[10px] text-gray-500 mt-1">Reunião 20% · Proposta 50% · Negociação 70%</div></div>';
+    html+='<div class="bg-[#111] border border-[#222] rounded-2xl p-5"><div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Tempo médio até fechar</div><div class="text-2xl font-black text-white">'+avgDays+' dias</div></div>';
+    html+='<div class="bg-[#111] border border-[#222] rounded-2xl p-5"><div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Leads parados (+7 dias)</div><div class="text-2xl font-black '+(parados.length>0?'text-red-400':'text-gray-500')+'">'+parados.length+'</div></div>';
+    html+='</div>';
+
+    // Funil por etapa
+    html+='<div class="bg-[#111] border border-[#222] rounded-2xl p-5"><h3 class="text-sm font-black text-white uppercase tracking-wider mb-4 flex items-center gap-2"><i data-lucide="filter" class="w-4 h-4 text-orange-500"></i> Funil por etapa (ativos)</h3><div class="space-y-2">';
+    pipe.forEach(function(p, i){
+      var w=Math.round(p.n/maxN*100);
+      var conv = i>0 ? pct(reached(SX_CRM_STAGES[i]), reached(SX_CRM_STAGES[i-1])) : 100;
+      html+='<div class="flex items-center gap-3"><div class="w-40 text-[11px] text-gray-300 font-bold truncate shrink-0">'+esc(p.st)+'</div><div class="flex-1 bg-[#0a0a0a] rounded-lg h-7 overflow-hidden border border-[#1f1f1f]"><div class="h-full bg-gradient-to-r from-orange-600 to-orange-500 flex items-center px-2" style="width:'+Math.max(w,4)+'%"><span class="text-[10px] font-black text-white">'+p.n+'</span></div></div><div class="w-24 text-right text-[11px] text-emerald-400 font-bold shrink-0">'+fmt(p.val)+'</div><div class="w-12 text-right text-[10px] text-gray-500 shrink-0" title="Conversão da etapa anterior">'+(i>0?conv+'%':'—')+'</div></div>';
+    });
+    html+='</div></div>';
+
+    // Produtividade por SDR + Motivos de perda
+    html+='<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">';
+    // SDRs
+    var thS='text-align:left;padding:10px 12px;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:800';
+    var owners=Object.keys(byOwner).sort(function(a,b){ return byOwner[b].fechados-byOwner[a].fechados || byOwner[b].leads-byOwner[a].leads; });
+    html+='<div class="bg-[#111] border border-[#222] rounded-2xl overflow-hidden"><div class="p-5 pb-3"><h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-orange-500"></i> Produtividade por responsável</h3></div><div class="overflow-x-auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#0a0a0a"><th style="'+thS+'">Responsável</th><th style="'+thS+';text-align:center">Leads</th><th style="'+thS+';text-align:center">Reuniões</th><th style="'+thS+';text-align:center">Fechados</th></tr></thead><tbody>';
+    if(owners.length===0){ html+='<tr><td colspan="4" style="text-align:center;padding:24px;color:#666">Sem dados</td></tr>'; }
+    owners.forEach(function(o){ var d=byOwner[o]; html+='<tr style="border-top:1px solid #1a1a1a"><td style="padding:10px 12px;color:#fff;font-weight:600">'+esc(o)+'</td><td style="padding:10px 12px;text-align:center;color:#ccc">'+d.leads+'</td><td style="padding:10px 12px;text-align:center;color:#f59e0b;font-weight:700">'+d.reunioes+'</td><td style="padding:10px 12px;text-align:center;color:#10b981;font-weight:800">'+d.fechados+'</td></tr>'; });
+    html+='</tbody></table></div></div>';
+    // Motivos de perda
+    html+='<div class="bg-[#111] border border-[#222] rounded-2xl p-5"><h3 class="text-sm font-black text-white uppercase tracking-wider mb-4 flex items-center gap-2"><i data-lucide="flag" class="w-4 h-4 text-red-500"></i> Motivos de perda ('+finalizados.length+')</h3>';
+    var estados=Object.keys(porEstado);
+    if(estados.length===0){ html+='<div class="text-sm text-gray-600 py-4 text-center">Nenhum lead finalizado ainda.</div>'; }
+    else {
+      var maxE=Math.max.apply(null, estados.map(function(k){ return porEstado[k]; }).concat([1]));
+      html+='<div class="space-y-2 mb-4">';
+      estados.forEach(function(k){ var w=Math.round(porEstado[k]/maxE*100); html+='<div class="flex items-center gap-3"><div class="w-36 text-[11px] text-gray-300 truncate shrink-0">'+esc(k)+'</div><div class="flex-1 bg-[#0a0a0a] rounded h-5 overflow-hidden border border-[#1f1f1f]"><div class="h-full bg-red-600/70" style="width:'+Math.max(w,4)+'%"></div></div><div class="w-8 text-right text-[11px] text-gray-400 font-bold shrink-0">'+porEstado[k]+'</div></div>'; });
+      html+='</div>';
+      var motivos=Object.keys(porMotivo);
+      if(motivos.length){ html+='<div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Motivos detalhados</div><div class="flex flex-wrap gap-1.5">'; motivos.sort(function(a,b){ return porMotivo[b]-porMotivo[a]; }).forEach(function(k){ html+='<span class="text-[10px] font-bold text-gray-300 bg-[#0a0a0a] border border-[#333] px-2 py-1 rounded">'+esc(k)+' <span class="text-red-400">'+porMotivo[k]+'</span></span>'; }); html+='</div>'; }
+    }
+    html+='</div>';
+    html+='</div>';
+
+    // Leads parados
+    if(parados.length){
+      html+='<div class="bg-[#111] border border-red-900/30 rounded-2xl p-5"><h3 class="text-sm font-black text-white uppercase tracking-wider mb-3 flex items-center gap-2"><i data-lucide="alarm-clock" class="w-4 h-4 text-red-500"></i> Leads parados (+7 dias sem atividade)</h3><div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">';
+      parados.slice(0,18).forEach(function(l){ var t=l.lastUpdatedAt||l.createdAt; var dias=Math.floor((now-new Date(t).getTime())/86400000); html+='<div onclick="window.appActions.openLeadModal(\''+l.id+'\')" class="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 cursor-pointer hover:border-red-700/50 transition flex items-center justify-between gap-2"><div class="min-w-0"><div class="text-xs font-bold text-white truncate">'+esc(l.company||l.name||'')+'</div><div class="text-[10px] text-gray-500 truncate">'+esc(l.phase||'')+' · '+esc(l.ownerName||'—')+'</div></div><span class="text-[10px] font-black text-red-400 shrink-0">'+dias+'d</span></div>'; });
+      html+='</div>'+(parados.length>18?'<div class="text-[10px] text-gray-500 mt-2">+ '+(parados.length-18)+' outros</div>':'')+'</div>';
+    }
+
+    html+='</div>';
+    return html;
+  };
+
+  /* ---------- Automação: atribuição automática de SDR ---------- */
+  function sxActiveSDRs(){ return (window.state.users||[]).filter(function(u){ return u.role==='SDR' || u.role==='BDR'; }); }
+  window.sxPickAssignee=function(){
+    var sdrs=sxActiveSDRs(); if(sdrs.length===0) return null;
+    var count={}; sdrs.forEach(function(u){ count[u.id]=0; });
+    (window.state.leads||[]).forEach(function(l){ if(l.closedState||l.phase==='Fechado') return; if(count[l.ownerUid]!=null) count[l.ownerUid]++; });
+    var best=sdrs[0], bestN=count[sdrs[0].id];
+    sdrs.forEach(function(u){ if(count[u.id]<bestN){ best=u; bestN=count[u.id]; } });
+    return best;
+  };
+
+  /* ---------- Automação: reativação de leads parados ---------- */
+  window.appActions.reativarLead=function(id){
+    var l=(window.state.leads||[]).find(function(x){ return x.id===id; }); if(!l) return;
+    var m=me(); var tid='TK'+Date.now()+'_rt_'+Math.floor(Math.random()*10000);
+    var b=db.batch();
+    b.set(db.collection('tasks').doc(tid), { leadId:id, company:(l.company||l.name||''), contact:(l.name||''), phone:(l.phone||''), type:'Reativação', dueDate:sxTodayStr(), status:'pendente', ownerUid:(l.ownerUid||m.uid), ownerName:(l.ownerName||m.name), createdAt:new Date().toISOString() });
+    b.set(db.collection('leads').doc(id), { lastUpdatedAt:new Date().toISOString(), history: firebase.firestore.FieldValue.arrayUnion(stamp('reativou')) }, {merge:true});
+    b.commit().then(function(){ window.showToast('Tarefa de reativação criada para hoje.','success'); });
+  };
+
+  /* ---------- Assistente comercial (sugestões automáticas) ---------- */
+  var SX_NEXT = {
+    'Empresa Identificada':'Enriquecer o lead: nome do contato, cargo, e-mail, LinkedIn e ferramentas (CRM/ads). Depois avance para "Lead Enriquecido".',
+    'Lead Enriquecido':'Fazer o primeiro contato (e-mail ou LinkedIn) e registrar em "Primeiro Contato".',
+    'Primeiro Contato':'Iniciar a cadência de follow-ups (mova para "Em Cadência").',
+    'Em Cadência':'Executar as tarefas de hoje da cadência (veja "Meu Dia").',
+    'Respondeu':'Qualificar com BANT: orçamento, quem decide, timing e a principal dor.',
+    'Qualificado':'Agendar a reunião de diagnóstico com o closer.',
+    'Reunião Agendada':'Confirmar presença 1 dia antes e preparar a reunião.',
+    'Reunião Realizada':'Enviar a proposta com base nas dores levantadas.',
+    'Proposta Enviada':'Fazer follow-up da proposta e checar objeções.',
+    'Negociação':'Tratar objeções, alinhar valores e definir uma data de decisão.',
+    'Fechado':'Iniciar onboarding e garantir a criação do projeto.'
+  };
+  window.sxLeadSuggestion=function(l){
+    if(!l) return null;
+    var sc=window.sxLeadScore(l), cls=window.sxScoreClass(sc);
+    var prioTxt = cls==='A'?'Prioridade máxima — contate primeiro.':(cls==='B'?'Boa prioridade.':(cls==='C'?'Prioridade média.':'Prioridade baixa — valide o ICP.'));
+    var next = l.closedState ? ('Lead finalizado ('+l.closedState+'). Reabra se houver novo interesse.') : (SX_NEXT[l.phase]||'Avançar o lead no funil.');
+    // pendências
+    var pend=(window.state.tasks||[]).filter(function(t){ return t.leadId===l.id && t.status==='pendente'; }).length;
+    return { score:sc, cls:cls, prio:prioTxt, next:next, pend:pend };
+  };
+  window.appActions.applySuggestedAssignee=null; // placeholder p/ futura IA real
 
   console.log('SCALEX • Firebase conectado (projeto '+(window.firebaseConfig&&window.firebaseConfig.projectId)+').');
 })();
